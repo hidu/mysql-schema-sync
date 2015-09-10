@@ -1,0 +1,18 @@
+{
+     "source":"test:test@(127.0.0.1:3306)/imis",
+     "dest":"test:test@(127.0.0.1:3306)/test",
+     "drop_ignore":{
+        "test":{
+            "column":["aaa"],
+            "index":["aa"]
+        }
+     },
+     "tables":[],
+     "email":{
+          "send_mail":false,
+         "smtp_host":"smtp.163.com:25",
+         "from":"xxx@163.com",
+         "password":"xxx",
+         "to":"xxx@163.com"
+     }
+}
