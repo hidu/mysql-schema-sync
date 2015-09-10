@@ -1,0 +1,1 @@
+# mysql-schema-sync
