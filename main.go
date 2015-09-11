@@ -31,7 +31,7 @@ func init() {
 		df()
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "mysql schema sync tools 0.1")
-		fmt.Fprintln(os.Stderr, "https://github.com/hidu/tool/\n")
+		fmt.Fprintln(os.Stderr, "https://github.com/hidu/mysql-schema-sync/\n")
 	}
 }
 
