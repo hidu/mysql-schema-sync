@@ -37,8 +37,7 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
 </code>
 
 说明：
-<pre>
-<code>
+<pre><code>
 #mysql-schema-sync -help  
   -conf string
         json config file path (default "./config.json")
