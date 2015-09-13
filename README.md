@@ -35,6 +35,7 @@ log存储在当前的log目录中。
 <code>
 mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
 </code>
+
 说明：
 <pre>
 <code>
