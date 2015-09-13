@@ -1,12 +1,13 @@
 {
-     "source":"test:test@(127.0.0.1:3306)/imis",
-     "dest":"test:test@(127.0.0.1:3306)/test",
-     "drop_ignore":{
-        "test":{
-            "column":["aaa"],
+     "source":"test:test@(127.0.0.1:3306)/test_0",
+     "dest":"test:test@(127.0.0.1:3306)/test_1",
+     "alter_ignore":{
+        "tb1*":{
+            "column":["aaa","a*"],
             "index":["aa"]
         }
      },
+     //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
      "email":{
           "send_mail":false,

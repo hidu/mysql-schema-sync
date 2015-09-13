@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"bytes"
 )
 
 var configPath = flag.String("conf", "./config.json", "json config file path")
@@ -95,7 +96,7 @@ func checkSchema() {
 
 	sc := NewSchemaSync(cfg)
 	newTables := sc.SourceDb.GetTableNames()
-
+	log.Println("source db table total:",len(newTables))
 	for index, table := range newTables {
 		log.Printf("Index : %d Table : %s\n", index, table)
 		if !cfg.ChechMatchTables(table) {
@@ -263,7 +264,7 @@ func (sc *SchemaSync) SyncSql4Dest(sqlStr string) error {
 		return nil
 	}
 	ret, err := sc.DestDb.Db.Query(sqlStr)
-	log.Println("Exec_SQL_DONE,err:", err)
+	log.Println("EXEC_SQL_DONE,err:", err)
 	cl, err := ret.Columns()
 	log.Println("ret:", cl, err)
 	return err
@@ -471,7 +472,7 @@ func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 type Config struct {
 	SourceDSN  string                      `json:"source"`
 	DestDSN    string                      `json:"dest"`
-	DropIgnore map[string]*DropIgnoreTable `json:"drop_ignore"`
+	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
 	Tables     []string                    `json:"tables"`
 	Email      *EmailStruct                `json:"email"`
 }
@@ -481,16 +482,18 @@ func (cfg *Config) String() string {
 	return string(ds)
 }
 
-type DropIgnoreTable struct {
+type AlterIgnoreTable struct {
 	Column []string `json:"column"`
 	Index  []string `json:"index"`
 }
 
 func (cfg *Config) IsIgnoreField(table string, name string) bool {
-	if dit, has := cfg.DropIgnore[table]; has {
-		for _, col := range dit.Column {
-			if col == name {
-				return true
+	for tname,dit:=range cfg.AlterIgnore{
+		if simple_match(tname,table,"IsIgnoreField_table"){
+			for _, col := range dit.Column {
+				if simple_match(col,name,"IsIgnoreField_colum") {
+					return true
+				}
 			}
 		}
 	}
@@ -502,18 +505,9 @@ func (cfg *Config) ChechMatchTables(name string) bool {
 		return true
 	}
 	for _, tableName := range cfg.Tables {
-		tableName = strings.TrimSpace(tableName)
-		if tableName == name {
+		if simple_match(tableName, name, "ChechMatchTables"){
 			return true
 		}
-		tableNameRegStr := "^" + strings.Replace(tableName, "*", `.*`, -1) + "$"
-		match, err := regexp.MatchString(tableNameRegStr, name)
-		if err != nil {
-			log.Println("ChechMatchTables failed,tableName=", tableName, ",err:", err)
-		} else {
-			log.Println("check tables,", name, " match ", tableName, ",reg:", tableNameRegStr)
-		}
-		return match
 	}
 	return false
 }
@@ -529,10 +523,12 @@ func (cfg *Config) check() {
 }
 
 func (cfg *Config) IsIgnoreIndex(table string, name string) bool {
-	if dit, has := cfg.DropIgnore[table]; has {
-		for _, index := range dit.Index {
-			if index == name {
-				return true
+	for tname,dit:=range cfg.AlterIgnore{
+		if simple_match(tname,table,"IsIgnoreIndex_table"){
+			for _, index := range dit.Index {
+				if simple_match(index,name){
+					return true
+				}
 			}
 		}
 	}
@@ -580,17 +576,31 @@ func (m *EmailStruct) SendMail(title string, body string) {
 }
 
 func LoadConfig(confPath string) *Config {
-	bd, err := ioutil.ReadFile(confPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
 	var cfg *Config
-	err = json.Unmarshal(bd, &cfg)
-	if err != nil {
-		log.Fatalln(err)
+	err:=loadJsonFile(confPath,&cfg)
+	if err!=nil{
+		log.Fatalln("load json conf:",confPath,"failed:",err)
 	}
 	return cfg
 }
+
+func loadJsonFile(jsonPath string, val interface{}) error {
+	bs, err := ioutil.ReadFile(jsonPath)
+	if err != nil {
+		return err
+	}
+	lines := strings.Split(string(bs), "\n")
+	var bf bytes.Buffer
+	for _, line := range lines {
+		lineNew := strings.TrimSpace(line)
+		if (len(lineNew)>0 && lineNew[0] == '#') || (len(lineNew) > 1 && lineNew[0:2] == "//") {
+			continue
+		}
+		bf.WriteString(lineNew)
+	}
+	return json.Unmarshal(bf.Bytes(), &val)
+}
+
 
 func In_StringSlice(str string, strSli []string) bool {
 	for _, v := range strSli {
@@ -599,6 +609,24 @@ func In_StringSlice(str string, strSli []string) bool {
 		}
 	}
 	return false
+}
+
+func simple_match(patternStr string, str string, msg ...string) bool {
+	str = strings.TrimSpace(str)
+	patternStr = strings.TrimSpace(patternStr)
+	if patternStr == str {
+		log.Println("simple_match:suc,equal", msg, "patternStr:", patternStr, "str:", str)
+		return true
+	}
+	pattern := "^" + strings.Replace(patternStr, "*", `.*`, -1) + "$"
+	match, err := regexp.MatchString(pattern, str)
+	if err != nil {
+		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
+	} 
+	if(match){
+		log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
+	}
+	return match
 }
 
 type myTimer struct {

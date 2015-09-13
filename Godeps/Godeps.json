@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/hidu/mysql-schema-sync",
+	"GoVersion": "go1.5.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-118-g3dd7008",
+			"Rev": "3dd7008ac1529aca1bcd8a9db75228a71ba23cac"
+		}
+	]
+}
