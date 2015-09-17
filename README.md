@@ -28,7 +28,7 @@
       },
       //  tables: table to check schema,default is all.eg :["order_*","goods"]
       "tables":[],
-      //有变动或者失败时，邮件接受人
+      //有变动或者失败时，邮件接收人
       "email":{
           "send_mail":false,
          "smtp_host":"smtp.163.com:25",
