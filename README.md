@@ -17,10 +17,8 @@
 {
       //source：同步源
       "source":"test:test@(127.0.0.1:3306)/test_0",
-
       //dest：待同步的数据库
       "dest":"test:test@(127.0.0.1:3306)/test_1",
-
       //alter_ignore： 同步时忽略的字段和索引
       "alter_ignore":{
         "tb1*":{
@@ -30,7 +28,6 @@
       },
       //  tables: table to check schema,default is all.eg :["order_*","goods"]
       "tables":[],
-      
       //有变动或者失败时，邮件接受人
       "email":{
           "send_mail":false,
