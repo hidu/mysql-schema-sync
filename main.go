@@ -28,6 +28,8 @@ var mailTo = flag.String("mail_to", "", "overwrite config's email.to")
 
 const version = "0.2"
 
+const appURL = "https://github.com/hidu/mysql-schema-sync/"
+
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate)
 	df := flag.Usage
@@ -35,7 +37,7 @@ func init() {
 		df()
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "mysql schema sync tools "+version)
-		fmt.Fprintln(os.Stderr, "https://github.com/hidu/mysql-schema-sync/\n")
+		fmt.Fprintln(os.Stderr, appURL+"\n")
 	}
 }
 
@@ -566,8 +568,6 @@ const tableStyle = `
      .tb_1 tr th,.tb_1 tr td{padding: 3px;border:1px solid #cccccc;line-height:20px}
      .tb_1 thead tr th{font-weight:bold;text-align: center;background:#e3eaee}
      .tb_1 tbody tr th{text-align: right;background:#f0f4f6;padding-right:5px}
-     .tb_1 tr:nth-of-type(odd) {background-color: #f9f9f9;}
-     .tb_1 tr:hover{background-color:#f2dede}
      .tb_1 tfoot{color:#cccccc}
      .td_c td{text-align: center}
      .td_r td{text-align: right}
@@ -608,6 +608,7 @@ func (m *EmailStruct) SendMail(title string, body string) {
 	}
 
 	body = tableStyle + "\n" + body
+	body += "<br/><hr style='border:none;border-top:1px solid #ccc'/><center>Powered by <a href='" + appURL + "'>mysql-schema-sync</a>&nbsp;" + version + "</center>"
 
 	msgBody := fmt.Sprintf("To: %s\r\nContent-Type: text/html;charset=utf-8\r\nSubject: %s\r\n\r\n%s", strings.Join(sendTo, ";"), title, body)
 	err := smtp.SendMail(m.SmtpHost, auth, m.From, sendTo, []byte(msgBody))
@@ -760,17 +761,15 @@ func (s *statics) toHtml() string {
 			<tr>
 			<th width="40px">no</th>
 			<th width="80px">table</th>
-			<th>alter</th>
-			<th>source</th>
-			<th>dest before</th>
-			<th>dest after</th>
+			<th>&nbsp;</th>
+			<th>&nbsp;</th>
 			</tr>
 		</thead><tbody>
 		`
 	for idx, tb := range s.tables {
 		code += "<tr>"
-		code += "<th>" + fmt.Sprintf("%d", idx+1) + "</th>\n"
-		code += "<td>" + tb.table + "<br/><br/>"
+		code += "<th rowspan=2>" + fmt.Sprintf("%d", idx+1) + "</th>\n"
+		code += "<td rowspan=2>" + tb.table + "<br/><br/>"
 		if *sync {
 			if tb.alterRet == nil {
 				code += "<font color=green>success</font>"
@@ -781,18 +780,21 @@ func (s *statics) toHtml() string {
 			code += "no sync"
 		}
 		code += "</td>\n"
-		code += "<td>" + htmlNl2br(tb.alter.SQL) + "</td>\n"
-		code += "<td>" + htmlNl2br(tb.alter.SourceSchema) + "</td>\n"
-		code += "<td>" + htmlNl2br(tb.alter.DestSchema) + "</td>\n"
-		code += "<td>" + htmlNl2br(tb.schemaAfter) + "</td>\n"
+		code += "<td valign=top><b>source schema:</b><br/>" + htmlPre(tb.alter.SourceSchema) + "</td>\n"
+		code += "<td valign=top><b>dest schema:</b><br/>" + htmlPre(tb.alter.DestSchema) + "</td>\n"
+		code += "</tr>\n"
+
+		code += "<tr>\n"
+		code += "<td valign=top><b>alter:</b><br/>" + htmlPre(tb.alter.SQL) + "</td>\n"
+		code += "<td valign=top><b>alter after:</b><br/>" + htmlPre(tb.schemaAfter) + "</td>\n"
 		code += "</tr>\n"
 	}
 	code += "</tbody></table>\n"
 	return code
 }
 
-func htmlNl2br(str string) string {
-	return strings.Replace(html.EscapeString(str), "\n", "<br/>", -1)
+func htmlPre(str string) string {
+	return "<pre>" + html.EscapeString(str) + "</pre>"
 }
 
 func (s *statics) alterFailedNum() int {
