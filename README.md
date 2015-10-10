@@ -80,20 +80,21 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
 <pre><code>
 #mysql-schema-sync -help  
   -conf string
-        json config file path (default "./config.json")
+        配置文件名称
   -dest string
-        mysql dsn dest,eg test@(127.0.0.1:3306)/test_0
+        mysql 同步源,eg test@(127.0.0.1:3306)/test_0
   -drop
-        drop fields and index (default true)
+        是否对本地多出的字段和索引进行删除 默认否
   -source string
-        mysql dsn source,eg: test@(10.10.0.1:3306)/test_1
-        when it is not empty ignore [-conf] param
+        待同步的数据库 eg: test@(10.10.0.1:3306)/test_1
+        该项不为空时，忽略读入 -conf参数项
   -sync
-        sync shcema change to dest db
+        是否将修改同步到数据库中去，默认否
   -tables string
-        table names to check
+        待检查同步的数据库表，为空则是全部
         eg : product_base,order_*
 
 </code>
 </pre>
+
 
