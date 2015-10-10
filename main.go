@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -14,7 +15,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"bytes"
 )
 
 var configPath = flag.String("conf", "./config.json", "json config file path")
@@ -24,6 +24,9 @@ var drop = flag.Bool("drop", true, "drop fields and index")
 var source = flag.String("source", "", "mysql dsn source,eg: test@(10.10.0.1:3306)/test\n\twhen it is not empty ignore [-conf] param")
 var dest = flag.String("dest", "", "mysql dsn dest,eg test@(127.0.0.1:3306)/imis")
 var tables = flag.String("tables", "", "table names to check\n\teg : product_base,order_*")
+var mailTo = flag.String("mail_to", "", "overwrite config's email.to")
+
+const version = "0.2"
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate)
@@ -31,7 +34,7 @@ func init() {
 	flag.Usage = func() {
 		df()
 		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "mysql schema sync tools 0.1")
+		fmt.Fprintln(os.Stderr, "mysql schema sync tools "+version)
 		fmt.Fprintln(os.Stderr, "https://github.com/hidu/mysql-schema-sync/\n")
 	}
 }
@@ -96,7 +99,7 @@ func checkSchema() {
 
 	sc := NewSchemaSync(cfg)
 	newTables := sc.SourceDb.GetTableNames()
-	log.Println("source db table total:",len(newTables))
+	log.Println("source db table total:", len(newTables))
 	for index, table := range newTables {
 		log.Printf("Index : %d Table : %s\n", index, table)
 		if !cfg.ChechMatchTables(table) {
@@ -118,17 +121,20 @@ func checkSchema() {
 		if *sync && sd.Type != ALTER_TYPE_NO {
 			st.alterRet = sc.SyncSql4Dest(sd.SQL)
 		}
+		st.schemaAfter = sc.DestDb.GetTableSchema(table)
 
 		st.timer.stop()
 	}
 }
 
+// SchemaSync 配置文件
 type SchemaSync struct {
 	Config   *Config
 	SourceDb *MyDb
 	DestDb   *MyDb
 }
 
+// NewSchemaSync 对一个配置进行同步
 func NewSchemaSync(config *Config) *SchemaSync {
 	s := new(SchemaSync)
 	s.Config = config
@@ -137,11 +143,12 @@ func NewSchemaSync(config *Config) *SchemaSync {
 	return s
 }
 
+// GetNewTableNames 获取所有新增加的表名
 func (sc *SchemaSync) GetNewTableNames() []string {
 	sourceTables := sc.SourceDb.GetTableNames()
 	destTables := sc.DestDb.GetTableNames()
 
-	newTables := make([]string, 0)
+	var newTables []string
 
 	for _, name := range sourceTables {
 		if !In_StringSlice(name, destTables) {
@@ -155,8 +162,13 @@ func (sc *SchemaSync) GetAlterDataByTable(table string) *TableAlterData {
 	alter := new(TableAlterData)
 	alter.Table = table
 	alter.Type = ALTER_TYPE_NO
+
 	sschema := sc.SourceDb.GetTableSchema(table)
 	dschema := sc.DestDb.GetTableSchema(table)
+
+	alter.SourceSchema = sschema
+	alter.DestSchema = dschema
+
 	if sschema == dschema {
 		return alter
 	}
@@ -418,9 +430,11 @@ func (at ALTER_TYPE) String() string {
 }
 
 type TableAlterData struct {
-	Table string
-	Type  ALTER_TYPE
-	SQL   string
+	Table        string
+	Type         ALTER_TYPE
+	SQL          string
+	SourceSchema string
+	DestSchema   string
 }
 
 func (ta *TableAlterData) String() string {
@@ -470,11 +484,11 @@ func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 }
 
 type Config struct {
-	SourceDSN  string                      `json:"source"`
-	DestDSN    string                      `json:"dest"`
+	SourceDSN   string                       `json:"source"`
+	DestDSN     string                       `json:"dest"`
 	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
-	Tables     []string                    `json:"tables"`
-	Email      *EmailStruct                `json:"email"`
+	Tables      []string                     `json:"tables"`
+	Email       *EmailStruct                 `json:"email"`
 }
 
 func (cfg *Config) String() string {
@@ -488,10 +502,10 @@ type AlterIgnoreTable struct {
 }
 
 func (cfg *Config) IsIgnoreField(table string, name string) bool {
-	for tname,dit:=range cfg.AlterIgnore{
-		if simple_match(tname,table,"IsIgnoreField_table"){
+	for tname, dit := range cfg.AlterIgnore {
+		if simple_match(tname, table, "IsIgnoreField_table") {
 			for _, col := range dit.Column {
-				if simple_match(col,name,"IsIgnoreField_colum") {
+				if simple_match(col, name, "IsIgnoreField_colum") {
 					return true
 				}
 			}
@@ -505,7 +519,7 @@ func (cfg *Config) ChechMatchTables(name string) bool {
 		return true
 	}
 	for _, tableName := range cfg.Tables {
-		if simple_match(tableName, name, "ChechMatchTables"){
+		if simple_match(tableName, name, "ChechMatchTables") {
 			return true
 		}
 	}
@@ -523,10 +537,10 @@ func (cfg *Config) check() {
 }
 
 func (cfg *Config) IsIgnoreIndex(table string, name string) bool {
-	for tname,dit:=range cfg.AlterIgnore{
-		if simple_match(tname,table,"IsIgnoreIndex_table"){
+	for tname, dit := range cfg.AlterIgnore {
+		if simple_match(tname, table, "IsIgnoreIndex_table") {
 			for _, index := range dit.Index {
-				if simple_match(index,name){
+				if simple_match(index, name) {
 					return true
 				}
 			}
@@ -543,6 +557,26 @@ type EmailStruct struct {
 	To           string `json:"to"`
 }
 
+const tableStyle = `
+<sTyle type='text/css'>
+      table {border-collapse: collapse;border-spacing: 0;}
+     .tb_1{border:1px solid #cccccc;table-layout:fixed;word-break:break-all;width: 100%;background:#ffffff;margin-bottom:5px}
+     .tb_1 caption{text-align: center;background: #F0F4F6;font-weight: bold;padding-top: 5px;height: 25px;border:1px solid #cccccc;border-bottom:none}
+     .tb_1 a{margin:0 3px 0 3px}
+     .tb_1 tr th,.tb_1 tr td{padding: 3px;border:1px solid #cccccc;line-height:20px}
+     .tb_1 thead tr th{font-weight:bold;text-align: center;background:#e3eaee}
+     .tb_1 tbody tr th{text-align: right;background:#f0f4f6;padding-right:5px}
+     .tb_1 tr:nth-of-type(odd) {background-color: #f9f9f9;}
+     .tb_1 tr:hover{background-color:#f2dede}
+     .tb_1 tfoot{color:#cccccc}
+     .td_c td{text-align: center}
+     .td_r td{text-align: right}
+     .t_c{text-align: center !important;}
+     .t_r{text-align: right !important;}
+     .t_l{text-align: left !important;}
+</stYle>
+`
+
 func (m *EmailStruct) SendMail(title string, body string) {
 	if !m.SendMailAble {
 		log.Println("disbale send email")
@@ -558,14 +592,23 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		return
 	}
 	auth := smtp.PlainAuth("", m.From, m.Password, addr_info[0])
+
 	_sendTo := strings.Split(m.To, ";")
 	var sendTo []string
 	for _, _to := range _sendTo {
 		_to = strings.TrimSpace(_to)
-		if _to != "" {
+		if _to != "" && strings.Contains(_to, "@") {
 			sendTo = append(sendTo, _to)
 		}
 	}
+
+	if len(sendTo) < 1 {
+		log.Println("mail receiver is empty")
+		return
+	}
+
+	body = tableStyle + "\n" + body
+
 	msgBody := fmt.Sprintf("To: %s\r\nContent-Type: text/html;charset=utf-8\r\nSubject: %s\r\n\r\n%s", strings.Join(sendTo, ";"), title, body)
 	err := smtp.SendMail(m.SmtpHost, auth, m.From, sendTo, []byte(msgBody))
 	if err == nil {
@@ -577,9 +620,12 @@ func (m *EmailStruct) SendMail(title string, body string) {
 
 func LoadConfig(confPath string) *Config {
 	var cfg *Config
-	err:=loadJsonFile(confPath,&cfg)
-	if err!=nil{
-		log.Fatalln("load json conf:",confPath,"failed:",err)
+	err := loadJsonFile(confPath, &cfg)
+	if err != nil {
+		log.Fatalln("load json conf:", confPath, "failed:", err)
+	}
+	if *mailTo != "" {
+		cfg.Email.To = *mailTo
 	}
 	return cfg
 }
@@ -593,14 +639,13 @@ func loadJsonFile(jsonPath string, val interface{}) error {
 	var bf bytes.Buffer
 	for _, line := range lines {
 		lineNew := strings.TrimSpace(line)
-		if (len(lineNew)>0 && lineNew[0] == '#') || (len(lineNew) > 1 && lineNew[0:2] == "//") {
+		if (len(lineNew) > 0 && lineNew[0] == '#') || (len(lineNew) > 1 && lineNew[0:2] == "//") {
 			continue
 		}
 		bf.WriteString(lineNew)
 	}
 	return json.Unmarshal(bf.Bytes(), &val)
 }
-
 
 func In_StringSlice(str string, strSli []string) bool {
 	for _, v := range strSli {
@@ -622,8 +667,8 @@ func simple_match(patternStr string, str string, msg ...string) bool {
 	match, err := regexp.MatchString(pattern, str)
 	if err != nil {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
-	} 
-	if(match){
+	}
+	if match {
 		log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
 	}
 	return match
@@ -672,22 +717,60 @@ func (s *statics) newTableStatics(table string, sd *TableAlterData) *tableStatic
 }
 
 func (s *statics) toHtml() string {
-	code := "<h2>Detail</h2>"
-	code += "<h3>Tables</h3>"
-	code += `<table>
+	code := "<h2>Result</h2>\n"
+	code += "<h3>Tables</h3>\n"
+	code += `<table class='tb_1'>
 		<thead>
 			<tr>
-			<th>no</th>
+			<th width="60px">no</th>
 			<th>table</th>
 			<th>alter result</th>
 			<th>used</th>
 			</tr>
-		</thead><tbody>`
+		</thead><tbody>
+		`
 	for idx, tb := range s.tables {
 		code += "<tr>"
 		code += "<td>" + fmt.Sprintf("%d", idx+1) + "</td>\n"
 		code += "<td><a href='#detail_" + tb.table + "'>" + tb.table + "</a></td>\n"
 		code += "<td>"
+		if *sync {
+			if tb.alterRet == nil {
+				code += "<font color=green>success</font>"
+			} else {
+				code += "<font color=red>failed," + html.EscapeString(tb.alterRet.Error()) + "</font>"
+			}
+		} else {
+			code += "no sync"
+		}
+		code += "</td>\n"
+		code += "<td>" + tb.timer.usedSecond() + "</td>\n"
+		code += "</tr>\n"
+	}
+	code += "</tbody></table>\n<h3>Sqls</h3>\n<pre>"
+	for _, tb := range s.tables {
+		code += "<a name='detail_" + tb.table + "'></a>"
+		code += html.EscapeString(tb.alter.String()) + "\n\n"
+	}
+	code += "</pre>\n\n"
+
+	code += "<h3>Detail</h3>\n"
+	code += `<table class='tb_1'>
+		<thead>
+			<tr>
+			<th width="40px">no</th>
+			<th width="80px">table</th>
+			<th>alter</th>
+			<th>source</th>
+			<th>dest before</th>
+			<th>dest after</th>
+			</tr>
+		</thead><tbody>
+		`
+	for idx, tb := range s.tables {
+		code += "<tr>"
+		code += "<th>" + fmt.Sprintf("%d", idx+1) + "</th>\n"
+		code += "<td>" + tb.table + "<br/><br/>"
 		if *sync {
 			if tb.alterRet == nil {
 				code += "<font color=green>success</font>"
@@ -698,17 +781,18 @@ func (s *statics) toHtml() string {
 			code += "no sync"
 		}
 		code += "</td>\n"
-		code += "<td>" + tb.timer.usedSecond() + "</td>\n"
+		code += "<td>" + htmlNl2br(tb.alter.SQL) + "</td>\n"
+		code += "<td>" + htmlNl2br(tb.alter.SourceSchema) + "</td>\n"
+		code += "<td>" + htmlNl2br(tb.alter.DestSchema) + "</td>\n"
+		code += "<td>" + htmlNl2br(tb.schemaAfter) + "</td>\n"
 		code += "</tr>\n"
 	}
-	code += "</tbody></table>\n<h3>Sqls</h3><pre>"
-	for _, tb := range s.tables {
-		code += "<a name='detail_" + tb.table + "'></a>"
-		code += html.EscapeString(tb.alter.String()) + "\n\n"
-	}
-	code += "</pre>"
-
+	code += "</tbody></table>\n"
 	return code
+}
+
+func htmlNl2br(str string) string {
+	return strings.Replace(html.EscapeString(str), "\n", "<br/>", -1)
 }
 
 func (s *statics) alterFailedNum() int {
@@ -738,11 +822,11 @@ func (s *statics) sendMailNotice(cfg *Config) {
 
 	if !*sync {
 		title += "[preview]"
-		body += "<font color=red>this is preview,all sql never execute!</font>"
+		body += "<font color=red>this is preview,all sql never execute!</font>\n"
 	}
 
 	host_name, _ := os.Hostname()
-	body += "<h2>Info</h2><pre>"
+	body += "<h2>Info</h2>\n<pre>"
 	body += "  from : " + dsnSort(cfg.SourceDSN) + "\n"
 	body += "    to : " + dsnSort(cfg.DestDSN) + "\n"
 	body += " alter : " + fmt.Sprintf("%d", len(s.tables)) + " tables\n"
@@ -760,7 +844,7 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	body += "   end : " + s.timer.end.Format(timeFormatStd) + "\n"
 	body += "  used : " + s.timer.usedSecond() + "\n"
 
-	body += "</pre>"
+	body += "</pre>\n"
 	body += s.toHtml()
 	cfg.Email.SendMail(title, body)
 }
@@ -774,8 +858,9 @@ func dsnSort(dsn string) string {
 }
 
 type tableStatics struct {
-	timer    *myTimer
-	table    string
-	alter    *TableAlterData
-	alterRet error
+	timer       *myTimer
+	table       string
+	alter       *TableAlterData
+	alterRet    error
+	schemaAfter string
 }
