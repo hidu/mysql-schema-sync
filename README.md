@@ -1,4 +1,14 @@
 # mysql-schema-sync
+mysql表结构自动同步工具  
+
+用于将 `线上` 数据库结构<b>变化</b>同步到 `测试环境`!
+支持同步：
+1.  新表
+2.  字段 变动：新增、修改
+3.  索引 变动：新增、修改
+4.  字段、索引 屏蔽变动更新
+
+
 
 ###安装
 >go get -u github.com/hidu/mysql-schema-sync
