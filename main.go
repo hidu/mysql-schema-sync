@@ -319,7 +319,7 @@ func (idx *DbIndex) AlterAddSql(drop bool) string {
 	default:
 		log.Fatalln("unknow indexType", idx.IndexType)
 	}
-	return strings.Join(alterSql, ",")
+	return strings.Join(alterSql, ",\n")
 }
 
 func (idx *DbIndex) AlterDropSql() string {
@@ -381,6 +381,8 @@ func ParseSchema(schema string) *MySchema {
 
 }
 
+var indexReg = regexp.MustCompile(`^([A-Z]+\s)?KEY\s`)
+
 func ParseDbIndexLine(line string) *DbIndex {
 	line = strings.TrimSpace(line)
 	idx := &DbIndex{
@@ -392,7 +394,11 @@ func ParseDbIndexLine(line string) *DbIndex {
 		return idx
 	}
 
-	if strings.HasPrefix(line, "UNIQUE") || strings.HasPrefix(line, "KEY") {
+	//  UNIQUE KEY `idx_a` (`a`) USING HASH COMMENT '注释',
+	//  FULLTEXT KEY `c` (`c`)
+	//  PRIMARY KEY (`d`)
+	//  KEY `idx_e` (`e`),
+	if indexReg.MatchString(line) {
 		arr := strings.Split(line, "`")
 		idx.IndexType = IndexType_Index
 		idx.Name = arr[1]
