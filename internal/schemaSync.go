@@ -116,6 +116,7 @@ func (sc *SchemaSync) getSchemaDiff(table string, sourceSchema string, destSchem
 			continue
 		}
 		dIdx, has := destMyS.IndexAll[indexName]
+		fmt.Println("indexName---->", indexName, "has:", has, dIdx, idx)
 		alterSQL := ""
 		if has {
 			if idx.SQL != dIdx.SQL {
@@ -127,6 +128,7 @@ func (sc *SchemaSync) getSchemaDiff(table string, sourceSchema string, destSchem
 		if alterSQL != "" {
 			alterLines = append(alterLines, alterSQL)
 		}
+		fmt.Println("alterSQL:", alterSQL)
 	}
 
 	//drop index

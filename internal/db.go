@@ -2,8 +2,8 @@ package internal
 
 import (
 	"database/sql"
-	//load mysql
 	"fmt"
+	//load mysql
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 )

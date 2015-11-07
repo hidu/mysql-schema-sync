@@ -3,9 +3,11 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html"
 	"io/ioutil"
 	"log"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -73,4 +75,15 @@ func dsnSort(dsn string) string {
 		return dsn
 	}
 	return dsn[i+1:]
+}
+
+func maxMapKeyLen(data interface{}, ext int) string {
+	l := 0
+
+	for _, k := range reflect.ValueOf(data).MapKeys() {
+		if k.Len() > l {
+			l = k.Len()
+		}
+	}
+	return fmt.Sprintf("%d", l+ext)
 }

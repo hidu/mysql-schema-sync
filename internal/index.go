@@ -9,16 +9,18 @@ import (
 
 // DbIndex db index
 type DbIndex struct {
-	indexType indexType
-	Name      string
-	SQL       string
+	indexType     indexType
+	Name          string
+	SQL           string
+	RelationTbles []string //相关联的表
 }
 
 type indexType string
 
 const (
-	indexTypePrimary indexType = "PRIMARY"
-	indexTypeIndex             = "index"
+	indexTypePrimary    indexType = "PRIMARY"
+	indexTypeIndex                = "INDEX"
+	indexTypeForeignKey           = "FOREIGN KEY"
 )
 
 func (idx *DbIndex) alterAddSQL(drop bool) string {
@@ -33,7 +35,7 @@ func (idx *DbIndex) alterAddSQL(drop bool) string {
 	switch idx.indexType {
 	case indexTypePrimary:
 		alterSQL = append(alterSQL, "ADD "+idx.SQL)
-	case indexTypeIndex:
+	case indexTypeIndex, indexTypeForeignKey:
 		alterSQL = append(alterSQL, fmt.Sprintf("ADD %s", idx.SQL))
 	default:
 		log.Fatalln("unknow indexType", idx.indexType)
@@ -47,13 +49,26 @@ func (idx *DbIndex) alterDropSQL() string {
 		return "DROP PRIMARY KEY"
 	case indexTypeIndex:
 		return fmt.Sprintf("DROP INDEX `%s`", idx.Name)
+	case indexTypeForeignKey:
+		return fmt.Sprintf("DROP FOREIGN KEY `%s`", idx.Name)
 	default:
 		log.Fatalln("unknow indexType", idx.indexType)
 	}
 	return ""
 }
 
+func (idx *DbIndex) addRelationTable(table string) {
+	table = strings.TrimSpace(table)
+	if table != "" {
+		idx.RelationTbles = append(idx.RelationTbles, table)
+	}
+}
+
+//匹配索引字段
 var indexReg = regexp.MustCompile(`^([A-Z]+\s)?KEY\s`)
+
+//匹配外键
+var foreignKeyReg = regexp.MustCompile("^CONSTRAINT `(.+)` FOREIGN KEY.+ REFERENCES `(.+)` ")
 
 func parseDbIndexLine(line string) *DbIndex {
 	line = strings.TrimSpace(line)
@@ -76,6 +91,16 @@ func parseDbIndexLine(line string) *DbIndex {
 		idx.Name = arr[1]
 		return idx
 	}
+
+	//CONSTRAINT `busi_table_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `repo_table` (`repo_id`)
+	foreignMatches := foreignKeyReg.FindStringSubmatch(line)
+	if len(foreignMatches) > 0 {
+		idx.indexType = indexTypeForeignKey
+		idx.Name = foreignMatches[1]
+		idx.addRelationTable(foreignMatches[2])
+		return idx
+	}
+
 	log.Fatalln("db_index parse failed,unsupport,line:", line)
 	return nil
 }
