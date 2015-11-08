@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"strings"
 )
 
 type alterType int
@@ -31,13 +32,20 @@ func (at alterType) String() string {
 
 // TableAlterData 表的变更情况
 type TableAlterData struct {
-	Table        string
-	Type         alterType
-	SQL          string
-	SourceSchema string
-	DestSchema   string
+	Table      string
+	Type       alterType
+	SQL        string
+	SchemaDiff *SchemaDiff
 }
 
 func (ta *TableAlterData) String() string {
-	return fmt.Sprintf("-- Table : %s\n-- Type  : %s\n-- SQL   :\n%s", ta.Table, ta.Type, ta.SQL)
+	relationTables := ta.SchemaDiff.RelationTables()
+	fmtStr := `
+-- Table : %s
+-- Type  : %s
+-- RealtionTables : %s
+-- SQL   : 
+%s
+`
+	return fmt.Sprintf(fmtStr, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.SQL)
 }

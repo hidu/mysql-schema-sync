@@ -11,7 +11,7 @@ import (
 
 var configPath = flag.String("conf", "./config.json", "json config file path")
 var sync = flag.Bool("sync", false, "sync shcema change to dest db")
-var drop = flag.Bool("drop", true, "drop fields and index")
+var drop = flag.Bool("drop", false, "drop fields,index,foreign key")
 
 var source = flag.String("source", "", "mysql dsn source,eg: test@(10.10.0.1:3306)/test\n\twhen it is not empty ignore [-conf] param")
 var dest = flag.String("dest", "", "mysql dsn dest,eg test@(127.0.0.1:3306)/imis")

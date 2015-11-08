@@ -4,7 +4,8 @@
      "alter_ignore":{
         "tb1*":{
             "column":["aaa","a*"],
-            "index":["aa"]
+            "index":["aa"],
+            "foreign":[]
         }
      },
      //  tables: table to check schema,default is all.eg :["order_*","goods"]

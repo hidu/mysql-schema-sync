@@ -66,7 +66,7 @@ func (s *statics) toHTML() string {
 				code += "<font color=red>failed," + html.EscapeString(tb.alterRet.Error()) + "</font>"
 			}
 		} else {
-			code += "no sync"
+			code += "not sync"
 		}
 		code += "</td>\n"
 		code += "<td>" + tb.timer.usedSecond() + "</td>\n"
@@ -104,8 +104,8 @@ func (s *statics) toHTML() string {
 			code += "no sync"
 		}
 		code += "</td>\n"
-		code += "<td valign=top><b>source schema:</b><br/>" + htmlPre(tb.alter.SourceSchema) + "</td>\n"
-		code += "<td valign=top><b>dest schema:</b><br/>" + htmlPre(tb.alter.DestSchema) + "</td>\n"
+		code += "<td valign=top><b>source schema:</b><br/>" + htmlPre(tb.alter.SchemaDiff.Source.SchemaRaw) + "</td>\n"
+		code += "<td valign=top><b>dest schema:</b><br/>" + htmlPre(tb.alter.SchemaDiff.Dest.SchemaRaw) + "</td>\n"
 		code += "</tr>\n"
 
 		code += "<tr>\n"
@@ -140,7 +140,7 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	title := "[mysql_schema_sync] " + fmt.Sprintf("%d", alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
 	body := ""
 
-	if s.Config.Sync {
+	if !s.Config.Sync {
 		title += "[preview]"
 		body += "<font color=red>this is preview,all sql never execute!</font>\n"
 	}

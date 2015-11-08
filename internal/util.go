@@ -60,7 +60,7 @@ func simpleMatch(patternStr string, str string, msg ...string) bool {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
 	}
 	if match {
-		log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
+		//log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
 	}
 	return match
 }

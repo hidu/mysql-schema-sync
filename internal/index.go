@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
@@ -9,7 +10,7 @@ import (
 
 // DbIndex db index
 type DbIndex struct {
-	indexType     indexType
+	IndexType     indexType
 	Name          string
 	SQL           string
 	RelationTbles []string //相关联的表
@@ -32,19 +33,24 @@ func (idx *DbIndex) alterAddSQL(drop bool) string {
 		}
 	}
 
-	switch idx.indexType {
+	switch idx.IndexType {
 	case indexTypePrimary:
 		alterSQL = append(alterSQL, "ADD "+idx.SQL)
 	case indexTypeIndex, indexTypeForeignKey:
 		alterSQL = append(alterSQL, fmt.Sprintf("ADD %s", idx.SQL))
 	default:
-		log.Fatalln("unknow indexType", idx.indexType)
+		log.Fatalln("unknow indexType", idx.IndexType)
 	}
 	return strings.Join(alterSQL, ",\n")
 }
 
+func (idx *DbIndex) String() string {
+	bs, _ := json.MarshalIndent(idx, "  ", " ")
+	return string(bs)
+}
+
 func (idx *DbIndex) alterDropSQL() string {
-	switch idx.indexType {
+	switch idx.IndexType {
 	case indexTypePrimary:
 		return "DROP PRIMARY KEY"
 	case indexTypeIndex:
@@ -52,7 +58,7 @@ func (idx *DbIndex) alterDropSQL() string {
 	case indexTypeForeignKey:
 		return fmt.Sprintf("DROP FOREIGN KEY `%s`", idx.Name)
 	default:
-		log.Fatalln("unknow indexType", idx.indexType)
+		log.Fatalln("unknow indexType", idx.IndexType)
 	}
 	return ""
 }
@@ -73,10 +79,11 @@ var foreignKeyReg = regexp.MustCompile("^CONSTRAINT `(.+)` FOREIGN KEY.+ REFEREN
 func parseDbIndexLine(line string) *DbIndex {
 	line = strings.TrimSpace(line)
 	idx := &DbIndex{
-		SQL: line,
+		SQL:           line,
+		RelationTbles: []string{},
 	}
 	if strings.HasPrefix(line, "PRIMARY") {
-		idx.indexType = indexTypePrimary
+		idx.IndexType = indexTypePrimary
 		idx.Name = "PRIMARY KEY"
 		return idx
 	}
@@ -87,7 +94,7 @@ func parseDbIndexLine(line string) *DbIndex {
 	//  KEY `idx_e` (`e`),
 	if indexReg.MatchString(line) {
 		arr := strings.Split(line, "`")
-		idx.indexType = indexTypeIndex
+		idx.IndexType = indexTypeIndex
 		idx.Name = arr[1]
 		return idx
 	}
@@ -95,7 +102,7 @@ func parseDbIndexLine(line string) *DbIndex {
 	//CONSTRAINT `busi_table_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `repo_table` (`repo_id`)
 	foreignMatches := foreignKeyReg.FindStringSubmatch(line)
 	if len(foreignMatches) > 0 {
-		idx.indexType = indexTypeForeignKey
+		idx.IndexType = indexTypeForeignKey
 		idx.Name = foreignMatches[1]
 		idx.addRelationTable(foreignMatches[2])
 		return idx

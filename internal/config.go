@@ -25,8 +25,9 @@ func (cfg *Config) String() string {
 
 // AlterIgnoreTable table's ignore info
 type AlterIgnoreTable struct {
-	Column []string `json:"column"`
-	Index  []string `json:"index"`
+	Column     []string `json:"column"`
+	Index      []string `json:"index"`
+	ForeignKey []string `json:"foreign"` //外键
 }
 
 // IsIgnoreField isIgnore
@@ -73,6 +74,20 @@ func (cfg *Config) IsIgnoreIndex(table string, name string) bool {
 		if simpleMatch(tname, table, "IsIgnoreIndex_table") {
 			for _, index := range dit.Index {
 				if simpleMatch(index, name) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// IsIgnoreForeignKey 检查外键是否忽略掉
+func (cfg *Config) IsIgnoreForeignKey(table string, name string) bool {
+	for tname, dit := range cfg.AlterIgnore {
+		if simpleMatch(tname, table, "IsIgnoreForeignKey_table") {
+			for _, foreignName := range dit.ForeignKey {
+				if simpleMatch(foreignName, name) {
 					return true
 				}
 			}

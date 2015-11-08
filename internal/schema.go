@@ -7,6 +7,7 @@ import (
 
 // MySchema table schema
 type MySchema struct {
+	SchemaRaw  string
 	Fields     map[string]string
 	IndexAll   map[string]*DbIndex
 	ForeignAll map[string]*DbIndex
@@ -41,11 +42,26 @@ func (mys *MySchema) GetFieldNames() []string {
 	return names
 }
 
+func (mys *MySchema) RelationTables() []string {
+	tbs := make(map[string]int)
+	for _, idx := range mys.ForeignAll {
+		for _, tb := range idx.RelationTbles {
+			tbs[tb] = 1
+		}
+	}
+	var tables []string
+	for tb := range tbs {
+		tables = append(tables, tb)
+	}
+	return tables
+}
+
 // ParseSchema parse table's schema
 func ParseSchema(schema string) *MySchema {
 	schema = strings.TrimSpace(schema)
 	lines := strings.Split(schema, "\n")
 	mys := &MySchema{
+		SchemaRaw:  schema,
 		Fields:     make(map[string]string),
 		IndexAll:   make(map[string]*DbIndex, 0),
 		ForeignAll: make(map[string]*DbIndex, 0),
@@ -66,7 +82,7 @@ func ParseSchema(schema string) *MySchema {
 			if idx == nil {
 				continue
 			}
-			switch idx.indexType {
+			switch idx.IndexType {
 			case indexTypeForeignKey:
 				mys.ForeignAll[idx.Name] = idx
 			default:
@@ -74,9 +90,27 @@ func ParseSchema(schema string) *MySchema {
 			}
 		}
 	}
-//	fmt.Println(schema)
-//	fmt.Println(mys)
-//	fmt.Println("-----")
+	//	fmt.Println(schema)
+	//	fmt.Println(mys)
+	//	fmt.Println("-----")
 	return mys
 
+}
+
+type SchemaDiff struct {
+	Table  string
+	Source *MySchema
+	Dest   *MySchema
+}
+
+func newSchemaDiff(table, source, dest string) *SchemaDiff {
+	return &SchemaDiff{
+		Table:  table,
+		Source: ParseSchema(source),
+		Dest:   ParseSchema(dest),
+	}
+}
+
+func (sdiff *SchemaDiff) RelationTables() []string {
+	return sdiff.Source.RelationTables()
 }
