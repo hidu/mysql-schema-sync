@@ -45,7 +45,7 @@ func (mys *MySchema) GetFieldNames() []string {
 func (mys *MySchema) RelationTables() []string {
 	tbs := make(map[string]int)
 	for _, idx := range mys.ForeignAll {
-		for _, tb := range idx.RelationTbles {
+		for _, tb := range idx.RelationTables {
 			tbs[tb] = 1
 		}
 	}

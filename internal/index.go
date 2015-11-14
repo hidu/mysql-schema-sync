@@ -13,7 +13,7 @@ type DbIndex struct {
 	IndexType     indexType
 	Name          string
 	SQL           string
-	RelationTbles []string //相关联的表
+	RelationTables []string //相关联的表
 }
 
 type indexType string
@@ -66,7 +66,7 @@ func (idx *DbIndex) alterDropSQL() string {
 func (idx *DbIndex) addRelationTable(table string) {
 	table = strings.TrimSpace(table)
 	if table != "" {
-		idx.RelationTbles = append(idx.RelationTbles, table)
+		idx.RelationTables = append(idx.RelationTables, table)
 	}
 }
 
@@ -80,7 +80,7 @@ func parseDbIndexLine(line string) *DbIndex {
 	line = strings.TrimSpace(line)
 	idx := &DbIndex{
 		SQL:           line,
-		RelationTbles: []string{},
+		RelationTables: []string{},
 	}
 	if strings.HasPrefix(line, "PRIMARY") {
 		idx.IndexType = indexTypePrimary
