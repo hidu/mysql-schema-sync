@@ -10,9 +10,9 @@ import (
 
 // DbIndex db index
 type DbIndex struct {
-	IndexType     indexType
-	Name          string
-	SQL           string
+	IndexType      indexType
+	Name           string
+	SQL            string
 	RelationTables []string //相关联的表
 }
 
@@ -79,7 +79,7 @@ var foreignKeyReg = regexp.MustCompile("^CONSTRAINT `(.+)` FOREIGN KEY.+ REFEREN
 func parseDbIndexLine(line string) *DbIndex {
 	line = strings.TrimSpace(line)
 	idx := &DbIndex{
-		SQL:           line,
+		SQL:            line,
 		RelationTables: []string{},
 	}
 	if strings.HasPrefix(line, "PRIMARY") {

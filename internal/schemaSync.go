@@ -79,7 +79,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	//比对字段
 	for name, dt := range sourceMyS.Fields {
 		if sc.Config.IsIgnoreField(table, name) {
-			log.Printf("ignore field %s.%s", table, name)
+			log.Printf("ignore column %s.%s", table, name)
 			continue
 		}
 		var alterSQL string
@@ -91,7 +91,10 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 			alterSQL = "ADD " + dt
 		}
 		if alterSQL != "" {
+			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, name), "alterSQL=", alterSQL)
 			alterLines = append(alterLines, alterSQL)
+		} else {
+			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, name), "not change")
 		}
 	}
 
@@ -99,11 +102,15 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	if sc.Config.Drop {
 		for name := range destMyS.Fields {
 			if sc.Config.IsIgnoreField(table, name) {
-				log.Printf("ignore field %s.%s", table, name)
+				log.Printf("ignore column %s.%s", table, name)
 				continue
 			}
 			if _, has := sourceMyS.Fields[name]; !has {
-				alterLines = append(alterLines, fmt.Sprintf("drop `%s`", name))
+				alterSQL := fmt.Sprintf("drop `%s`", name)
+				alterLines = append(alterLines, alterSQL)
+				log.Println("trace check column.drop ", fmt.Sprintf("%s.%s", table, name), "alterSQL=", alterSQL)
+			} else {
+				log.Println("trace check column.drop ", fmt.Sprintf("%s.%s", table, name), "not change")
 			}
 		}
 	}
@@ -117,7 +124,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 			continue
 		}
 		dIdx, has := destMyS.IndexAll[indexName]
-		log.Println("trace indexName---->[", indexName, "] has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
+		log.Println("trace indexName---->[", fmt.Sprintf("%s.%s", table, indexName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
 		alterSQL := ""
 		if has {
 			if idx.SQL != dIdx.SQL {
@@ -128,8 +135,10 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 		if alterSQL != "" {
 			alterLines = append(alterLines, alterSQL)
+			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", alterSQL)
+		} else {
+			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "not change")
 		}
-		//		fmt.Println("alterSQL:", alterSQL)
 	}
 
 	//drop index
@@ -139,11 +148,16 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 				log.Printf("ignore index %s.%s", table, indexName)
 				continue
 			}
-
+			var dropSQL string
 			if _, has := sourceMyS.IndexAll[indexName]; !has {
-				if dropSQL := dIdx.alterDropSQL(); dropSQL != "" {
-					alterLines = append(alterLines, dropSQL)
-				}
+				dropSQL = dIdx.alterDropSQL()
+			}
+
+			if dropSQL != "" {
+				alterLines = append(alterLines, dropSQL)
+				log.Println("trace check index.drop ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", dropSQL)
+			} else {
+				log.Println("trace check index.drop ", fmt.Sprintf("%s.%s", table, indexName), " not change")
 			}
 		}
 	}
@@ -155,7 +169,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 			continue
 		}
 		dIdx, has := destMyS.ForeignAll[foreignName]
-		log.Println("trace foreignName---->[", foreignName, "] has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
+		log.Println("trace foreignName---->[", fmt.Sprintf("%s.%s", table, foreignName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
 		alterSQL := ""
 		if has {
 			if idx.SQL != dIdx.SQL {
@@ -166,8 +180,10 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 		if alterSQL != "" {
 			alterLines = append(alterLines, alterSQL)
+			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", alterSQL)
+		} else {
+			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
 		}
-		//		fmt.Println("alterSQL:", alterSQL)
 	}
 
 	//drop 外键
@@ -177,12 +193,17 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 				log.Printf("ignore foreignName %s.%s", table, foreignName)
 				continue
 			}
-
+			var dropSQL string
 			if _, has := sourceMyS.ForeignAll[foreignName]; !has {
-				log.Println("trace foreignName --->[", foreignName, "]", "didx:", dIdx)
-				if dropSQL := dIdx.alterDropSQL(); dropSQL != "" {
-					alterLines = append(alterLines, dropSQL)
-				}
+				log.Println("trace foreignName --->[", fmt.Sprintf("%s.%s", table, foreignName), "]", "didx:", dIdx)
+				dropSQL = dIdx.alterDropSQL()
+
+			}
+			if dropSQL != "" {
+				alterLines = append(alterLines, dropSQL)
+				log.Println("trace check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", dropSQL)
+			} else {
+				log.Println("trace check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
 			}
 		}
 	}
