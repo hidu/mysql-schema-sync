@@ -212,7 +212,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 }
 
 // SyncSQL4Dest sync schema change
-func (sc *SchemaSync) SyncSQL4Dest(sqlStr string) error {
+func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 	log.Println("Exec_SQL_START:\n>>>>>>\n", sqlStr, "\n<<<<<<<<\n")
 	sqlStr = strings.TrimSpace(sqlStr)
 	if sqlStr == "" {
@@ -221,6 +221,26 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string) error {
 	}
 	t := newMyTimer()
 	ret, err := sc.DestDb.Query(sqlStr)
+
+	//how to enable allowMultiQueries?
+	if err != nil && len(sqls) > 1 {
+		log.Println("exec_mut_query failed,err=", err, ",now exec sqls foreach")
+		tx, errTx := sc.DestDb.Db.Begin()
+		if errTx == nil {
+			for _, sql := range sqls {
+				ret, err = tx.Query(sql)
+				log.Println("query_one:[", sql, "]", err)
+				if err != nil {
+					break
+				}
+			}
+			if err == nil {
+				err = tx.Commit()
+			} else {
+				tx.Rollback()
+			}
+		}
+	}
 	t.stop()
 	if err != nil {
 		log.Println("EXEC_SQL_FAIELD", err)
@@ -290,17 +310,19 @@ run_sync:
 		var sqls []string
 		var sts []*tableStatics
 		for _, sd := range sds {
-			sqls = append(sqls, sd.SQL)
+			sql := strings.TrimRight(sd.SQL, ";")
+			sqls = append(sqls, sql)
 
 			st := statics.newTableStatics(sd.Table, sd)
 			sts = append(sts, st)
 		}
 
-		sql := strings.Join(sqls, ";\n")
+		sql := strings.Join(sqls, ";\n") + ";"
 		var ret error
 
 		if sc.Config.Sync {
-			ret = sc.SyncSQL4Dest(sql)
+
+			ret = sc.SyncSQL4Dest(sql, sqls)
 			if ret == nil {
 				countSuccess++
 			} else {
@@ -315,7 +337,7 @@ run_sync:
 
 	} //end for
 
-	//最后在执行多个表的alter
+	//最后再执行多个表的alter
 	if canRunTypePref == "single" {
 		canRunTypePref = "multi"
 		goto run_sync

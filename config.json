@@ -1,5 +1,5 @@
 {
-     "source":"test:test@(127.0.0.1:3306)/test_0",
+     "source":"test:test@(127.0.0.1:3306)/test",
      "dest":"test:test@(127.0.0.1:3306)/test_1",
      "alter_ignore":{
         "tb1*":{
