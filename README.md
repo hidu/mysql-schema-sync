@@ -16,8 +16,6 @@ mysql表结构自动同步工具
 ###安装
 >go get -u github.com/hidu/mysql-schema-sync
 
-###下载二进制文件
-> [网盘下载:windows、linux、darwin版本](http://pan.baidu.com/s/1hqo6B2k)
 
 ### 配置
 参考 默认配置文件  config.json 配置同步源、目的地址。  
