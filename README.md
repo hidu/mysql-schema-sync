@@ -13,7 +13,7 @@ mysql表结构自动同步工具
 
 
 
-###安装
+### 安装
 >go get -u github.com/hidu/mysql-schema-sync
 
 
@@ -59,16 +59,16 @@ alter_ignore： 忽略修改的配置，表名为tableName，可以配置 column
 email ： 同步完成后发送邮件通知信息  
 
 ### 运行
-###直接运行
+### 直接运行
 ```
 mysql-schema-sync -conf mydb_conf.json -sync
 ```
  
-###预览并生成变更sql
+### 预览并生成变更sql
 ```
 mysql-schema-sync -conf mydb_conf.json 2>/dev/null >db_alter.sql
 ```
-###使用shell调度
+### 使用shell调度
 ```
 bash check.sh
 ```
@@ -76,21 +76,21 @@ bash check.sh
 每个json文件配置一个目的数据库，check.sh脚本会依次运行每份配置。
 log存储在当前的log目录中。
 
-###自动定时运行
+### 自动定时运行
 添加crontab 任务
 
 <code>
 30 * * * *  cd /your/path/xxx/ && bash check.sh >/dev/null 2>&1 
 </code>
 
-###参数说明
+### 参数说明
 <code>
 mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
 </code>
 
 说明：
 <pre><code>
-#mysql-schema-sync -help  
+# mysql-schema-sync -help  
   -conf string
         配置文件名称
   -dest string
