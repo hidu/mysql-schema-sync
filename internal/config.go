@@ -8,14 +8,15 @@ import (
 
 // Config  config struct
 type Config struct {
-	SourceDSN   string                       `json:"source"`
-	DestDSN     string                       `json:"dest"`
-	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
-	Tables      []string                     `json:"tables"`
-	Email       *EmailStruct                 `json:"email"`
-	ConfigPath  string
-	Sync        bool
-	Drop        bool
+	SourceDSN    string                       `json:"source"`
+	DestDSN      string                       `json:"dest"`
+	AlterIgnore  map[string]*AlterIgnoreTable `json:"alter_ignore"`
+	Tables       []string                     `json:"tables"`
+	TablesIgnore []string                     `json:"tables_ignore"`
+	Email        *EmailStruct                 `json:"email"`
+	ConfigPath   string
+	Sync         bool
+	Drop         bool
 }
 
 func (cfg *Config) String() string {
@@ -50,6 +51,19 @@ func (cfg *Config) ChechMatchTables(name string) bool {
 		return true
 	}
 	for _, tableName := range cfg.Tables {
+		if simpleMatch(tableName, name, "ChechMatchTables") {
+			return true
+		}
+	}
+	return false
+}
+
+// ChechMatchIgnoreTables check ignore table is match
+func (cfg *Config) ChechMatchIgnoreTables(name string) bool {
+	if len(cfg.TablesIgnore) == 0 {
+		return true
+	}
+	for _, tableName := range cfg.TablesIgnore {
 		if simpleMatch(tableName, name, "ChechMatchTables") {
 			return true
 		}
