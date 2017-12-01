@@ -61,7 +61,7 @@ func (cfg *Config) ChechMatchTables(name string) bool {
 // ChechMatchIgnoreTables check ignore table is match
 func (cfg *Config) ChechMatchIgnoreTables(name string) bool {
 	if len(cfg.TablesIgnore) == 0 {
-		return true
+		return false
 	}
 	for _, tableName := range cfg.TablesIgnore {
 		if simpleMatch(tableName, name, "ChechMatchTables") {
