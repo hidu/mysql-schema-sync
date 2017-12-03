@@ -268,7 +268,7 @@ func CheckSchemaDiff(cfg *Config) {
 
 	for index, table := range newTables {
 		log.Printf("Index : %d Table : %s\n", index, table)
-		if !cfg.ChechMatchTables(table) {
+		if !cfg.CheckMatchTables(table) {
 			log.Println("Table:", table, "skip")
 			continue
 		}

@@ -44,13 +44,13 @@ func (cfg *Config) IsIgnoreField(table string, name string) bool {
 	return false
 }
 
-// ChechMatchTables check table is match
-func (cfg *Config) ChechMatchTables(name string) bool {
+// CheckMatchTables check table is match
+func (cfg *Config) CheckMatchTables(name string) bool {
 	if len(cfg.Tables) == 0 {
 		return true
 	}
 	for _, tableName := range cfg.Tables {
-		if simpleMatch(tableName, name, "ChechMatchTables") {
+		if simpleMatch(tableName, name, "CheckMatchTables") {
 			return true
 		}
 	}
