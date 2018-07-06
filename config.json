@@ -1,6 +1,6 @@
 {
-     "source":"test:test@(127.0.0.1:3306)/test",
-     "dest":"test:test@(127.0.0.1:3306)/test_1",
+     "source":"root:RyNXMfigZhtkt3ti@tcp(rm-bp1613192u3673jr7to.mysql.rds.aliyuncs.com:3306)/audience_data",
+     "dest":"root:Datahub828!@tcp(116.62.116.178:3306)/audience_data",
      "alter_ignore":{
         "tb1*":{
             "column":["aaa","a*"],
@@ -8,13 +8,12 @@
             "foreign":[]
         }
      },
-     //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
      "email":{
           "send_mail":false,
-         "smtp_host":"smtp.163.com:25",
-         "from":"xxx@163.com",
-         "password":"xxx",
-         "to":"xxx@163.com"
+         "smtp_host":"smtp.exmail.qq.com:25",
+         "from":"noreply@chiefclouds.com",
+         "password":"18matCSjA0syX",
+         "to":"jumping.qu@chiefclouds.com"
      }
 }

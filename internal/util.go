@@ -69,6 +69,14 @@ func htmlPre(str string) string {
 	return "<pre>" + html.EscapeString(str) + "</pre>"
 }
 
+func newDsnDbName(dsn string) (newDsn, dbName string) {
+	i := strings.Split(dsn, ")/")
+	if len(i) < 1 {
+		panic(fmt.Sprintf("get database name from %s failed.", dsn))
+	}
+	return i[0], i[len(i)-1]
+}
+
 func dsnSort(dsn string) string {
 	i := strings.Index(dsn, "@")
 	if i < 1 {

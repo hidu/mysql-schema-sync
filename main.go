@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/hidu/mysql-schema-sync/internal"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/hidu/mysql-schema-sync/internal"
 )
 
 var configPath = flag.String("conf", "./config.json", "json config file path")
@@ -17,6 +18,7 @@ var source = flag.String("source", "", "mysql dsn source,eg: test@(10.10.0.1:330
 var dest = flag.String("dest", "", "mysql dsn dest,eg test@(127.0.0.1:3306)/imis")
 var tables = flag.String("tables", "", "table names to check\n\teg : product_base,order_*")
 var mailTo = flag.String("mail_to", "", "overwrite config's email.to")
+var createDb = flag.Bool("create_db", false, "create DB on the dest if doesn't exist")
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate)
@@ -42,6 +44,11 @@ func main() {
 	}
 	cfg.Sync = *sync
 	cfg.Drop = *drop
+	cfg.CreateDb = *createDb
+
+	if cfg.CreateDb {
+		internal.Check(cfg)
+	}
 
 	if *mailTo != "" && cfg.Email != nil {
 		cfg.Email.To = *mailTo

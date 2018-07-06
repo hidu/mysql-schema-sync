@@ -45,10 +45,12 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		return
 	}
 	addrInfo := strings.Split(m.SMTPHost, ":")
+
 	if len(addrInfo) != 2 {
 		log.Println("smtp_host wrong,eg: host_name:25")
 		return
 	}
+
 	auth := smtp.PlainAuth("", m.From, m.Password, addrInfo[0])
 
 	_sendTo := strings.Split(m.To, ";")

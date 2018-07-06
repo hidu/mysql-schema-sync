@@ -3,9 +3,12 @@ package internal
 import (
 	"database/sql"
 	"fmt"
+	"log"
+
+	"github.com/davecgh/go-spew/spew"
+
 	//load mysql
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 )
 
 // MyDb db struct
@@ -18,12 +21,22 @@ type MyDb struct {
 func NewMyDb(dsn string, dbType string) *MyDb {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(fmt.Sprintf("connect to db [%s] failed,", dsn, err))
+		panic(fmt.Sprintf("connect to db [%s] failed, %s", dsn, err.Error()))
 	}
 	return &MyDb{
 		Db:     db,
 		dbType: dbType,
 	}
+}
+
+// GetDestDbName get database
+func (mydb *MyDb) GetDestDbName(dbName string) {
+	sql := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s;", dbName)
+	_, err := mydb.Db.Exec(sql)
+	if err != nil {
+		panic(sql + "failed: " + err.Error())
+	}
+
 }
 
 // GetTableNames table names
@@ -37,7 +50,7 @@ func (mydb *MyDb) GetTableNames() []string {
 	columns, _ := rs.Columns()
 	for rs.Next() {
 		var values = make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
+		var valuePtrs = make([]interface{}, len(columns))
 		for i := range columns {
 			valuePtrs[i] = &values[i]
 		}
@@ -46,19 +59,18 @@ func (mydb *MyDb) GetTableNames() []string {
 		}
 		var valObj = make(map[string]interface{})
 		for i, col := range columns {
-			var v interface{}
-			val := values[i]
-			b, ok := val.([]byte)
+			b, ok := values[i].([]byte)
 			if ok {
-				v = string(b)
+				valObj[col] = string(b)
 			} else {
-				v = val
+				valObj[col] = values[i]
 			}
-			valObj[col] = v
+
 		}
 		if valObj["Engine"] != nil {
 			tables = append(tables, valObj["Name"].(string))
 		}
+		spew.Dump(tables)
 	}
 	return tables
 }

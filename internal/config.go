@@ -16,6 +16,7 @@ type Config struct {
 	ConfigPath  string
 	Sync        bool
 	Drop        bool
+	CreateDb    bool
 }
 
 func (cfg *Config) String() string {
