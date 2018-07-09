@@ -20,6 +20,8 @@ var tables = flag.String("tables", "", "table names to check\n\teg : product_bas
 var mailTo = flag.String("mail_to", "", "overwrite config's email.to")
 var createDb = flag.Bool("create_db", false, "create DB on the dest if doesn't exist")
 
+var dbName = flag.String("db_name", "", "which db will be synced")
+
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate)
 	df := flag.Usage
@@ -46,10 +48,6 @@ func main() {
 	cfg.Drop = *drop
 	cfg.CreateDb = *createDb
 
-	if cfg.CreateDb {
-		internal.Check(cfg)
-	}
-
 	if *mailTo != "" && cfg.Email != nil {
 		cfg.Email.To = *mailTo
 	}
@@ -74,6 +72,12 @@ func main() {
 		}
 	})()
 
-	cfg.Check()
+	fmt.Println("-----------", *dbName)
+	cfg.Check(*dbName)
+
+	if cfg.CreateDb {
+		internal.Check(cfg)
+	}
+
 	internal.CheckSchemaDiff(cfg)
 }
