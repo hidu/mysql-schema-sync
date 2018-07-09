@@ -2,8 +2,10 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 // Config  config struct
@@ -16,6 +18,7 @@ type Config struct {
 	ConfigPath  string
 	Sync        bool
 	Drop        bool
+	CreateDb    bool
 }
 
 func (cfg *Config) String() string {
@@ -58,14 +61,29 @@ func (cfg *Config) CheckMatchTables(name string) bool {
 }
 
 // Check check config
-func (cfg *Config) Check() {
+func (cfg *Config) Check(dbName string) {
 	if cfg.SourceDSN == "" {
 		log.Fatal("source dns is empty")
 	}
 	if cfg.DestDSN == "" {
 		log.Fatal("dest dns is empty")
 	}
+
+	if dbName != "" {
+		cfg.SourceDSN = cfg.AppendDb(cfg.SourceDSN, dbName)
+		cfg.DestDSN = cfg.AppendDb(cfg.DestDSN, dbName)
+	}
 	//	log.Println("config:\n", cfg)
+}
+
+// AppendDb dbname which will ignore the db name in the configure json file
+func (cfg *Config) AppendDb(dsn, dbName string) string {
+	prefix, dbname := splitDsn(dsn)
+	if strings.ToLower(dbname) != strings.ToLower(dbName) {
+		return fmt.Sprintf("%s)/%s", prefix, dbName)
+	} else {
+		return dsn
+	}
 }
 
 // IsIgnoreIndex is index ignore

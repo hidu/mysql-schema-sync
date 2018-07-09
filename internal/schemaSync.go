@@ -213,7 +213,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 
 // SyncSQL4Dest sync schema change
 func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
-	log.Println("Exec_SQL_START:\n>>>>>>\n", sqlStr, "\n<<<<<<<<\n")
+	log.Println("Exec_SQL_START:\nSTART>>>>>>\n", sqlStr, "\n<<<<<<<<END\n")
 	sqlStr = strings.TrimSpace(sqlStr)
 	if sqlStr == "" {
 		log.Println("sql_is_empty,skip")
@@ -275,8 +275,9 @@ func CheckSchemaDiff(cfg *Config) {
 
 		sd := sc.getAlterDataByTable(table)
 
+		//spew.Dump(sd)
 		if sd.Type != alterTypeNo {
-			fmt.Println(sd)
+
 			fmt.Println("")
 			relationTables := sd.SchemaDiff.RelationTables()
 			//			fmt.Println("relationTables:",table,relationTables)
@@ -318,6 +319,9 @@ run_sync:
 		}
 
 		sql := strings.Join(sqls, ";\n") + ";"
+		if canRunTypePref == "multi" {
+			sql = fmt.Sprintf("%s %s", "SET FOREIGN_KEY_CHECKS=0;", sql)
+		}
 		var ret error
 
 		if sc.Config.Sync {
