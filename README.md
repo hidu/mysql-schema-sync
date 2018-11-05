@@ -94,12 +94,12 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
   -conf string
         配置文件名称
   -dest string
-        mysql 同步源,eg test@(127.0.0.1:3306)/test_0
+        待同步的数据库 eg: test@(10.10.0.1:3306)/test_1
+        该项不为空时，忽略读入 -conf参数项
   -drop
         是否对本地多出的字段和索引进行删除 默认否
   -source string
-        待同步的数据库 eg: test@(10.10.0.1:3306)/test_1
-        该项不为空时，忽略读入 -conf参数项
+        mysql 同步源,eg test@(127.0.0.1:3306)/test_0
   -sync
         是否将修改同步到数据库中去，默认否
   -tables string
