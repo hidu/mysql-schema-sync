@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/514366607/mysql-schema-sync/internal"
+	"github.com/hidu/mysql-schema-sync/internal"
 )
 
 var configPath = flag.String("conf", "./config.json", "json config file path")
