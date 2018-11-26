@@ -10,7 +10,7 @@
      },
      //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
-     //  tables_ignore: table to ignore check schema,default is all.eg :["order_*","goods"]
+     //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
      "tables_ignore":[],
      "email":{
           "send_mail":false,
