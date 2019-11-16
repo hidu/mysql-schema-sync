@@ -24,7 +24,7 @@ mysql表结构自动同步工具
 默认情况不会对多出的**表、字段、索引、外键**删除。若需要删除**字段、索引、外键** 可以使用 <code>-drop</code> 参数。
 
 配置示例(config.json):  
-```javascript
+```
 {
       //source：同步源
       "source":"test:test@(127.0.0.1:3306)/test_0",

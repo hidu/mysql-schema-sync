@@ -8,15 +8,30 @@ import (
 
 // Config  config struct
 type Config struct {
-	SourceDSN    string                       `json:"source"`
-	DestDSN      string                       `json:"dest"`
-	AlterIgnore  map[string]*AlterIgnoreTable `json:"alter_ignore"`
-	Tables       []string                     `json:"tables"`
-	TablesIGNORE []string                     `json:"tables_ignore"`
-	Email        *EmailStruct                 `json:"email"`
-	ConfigPath   string
-	Sync         bool
-	Drop         bool
+	// SourceDSN 同步的源头
+	SourceDSN string `json:"source"`
+
+	// DestDSN 将被同步
+	DestDSN string `json:"dest"`
+
+	// AlterIgnore 忽略配置， eg:   "tb1*":{"column":["aaa","a*"],"index":["aa"],"foreign":[]}
+	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
+
+	// Tables 同步表的白名单，若为空，则同步全库
+	Tables []string `json:"tables"`
+
+	// TablesIGNORE 不同步的表
+	TablesIGNORE []string `json:"tables_ignore"`
+
+	// Email 完成同步后发送同步信息的邮件账号信息
+	Email      *EmailStruct `json:"email"`
+	ConfigPath string
+
+	// Sync 是否真正的执行同步操作
+	Sync bool
+
+	// Drop 若目标数据库表比源头多了字段、索引，是否删除
+	Drop bool
 }
 
 func (cfg *Config) String() string {
@@ -26,9 +41,11 @@ func (cfg *Config) String() string {
 
 // AlterIgnoreTable table's ignore info
 type AlterIgnoreTable struct {
-	Column     []string `json:"column"`
-	Index      []string `json:"index"`
-	ForeignKey []string `json:"foreign"` //外键
+	Column []string `json:"column"`
+	Index  []string `json:"index"`
+
+	// 外键
+	ForeignKey []string `json:"foreign"`
 }
 
 // IsIgnoreField isIgnore
@@ -47,6 +64,7 @@ func (cfg *Config) IsIgnoreField(table string, name string) bool {
 
 // CheckMatchTables check table is match
 func (cfg *Config) CheckMatchTables(name string) bool {
+	// 若没有指定表，则意味对全库进行同步
 	if len(cfg.Tables) == 0 {
 		return true
 	}
@@ -61,7 +79,7 @@ func (cfg *Config) CheckMatchTables(name string) bool {
 // CheckMatchIgnoreTables check table_Ignore is match
 func (cfg *Config) CheckMatchIgnoreTables(name string) bool {
 	if len(cfg.TablesIGNORE) == 0 {
-		return true
+		return false
 	}
 	for _, tableName := range cfg.TablesIGNORE {
 		if simpleMatch(tableName, name, "CheckMatchTables") {
@@ -135,8 +153,5 @@ func LoadConfig(confPath string) *Config {
 		log.Fatalln("load json conf:", confPath, "failed:", err)
 	}
 	cfg.ConfigPath = confPath
-	//	if *mailTo != "" {
-	//		cfg.Email.To = *mailTo
-	//	}
 	return cfg
 }

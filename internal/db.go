@@ -3,9 +3,9 @@ package internal
 import (
 	"database/sql"
 	"fmt"
-	//load mysql
-	_ "github.com/go-sql-driver/mysql"
 	"log"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // MyDb db struct
@@ -18,7 +18,7 @@ type MyDb struct {
 func NewMyDb(dsn string, dbType string) *MyDb {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(fmt.Sprintf("connect to db [%s] failed,", dsn, err))
+		panic(fmt.Sprintf("connected to db [%s] failed,err=%s", dsn, err))
 	}
 	return &MyDb{
 		Db:     db,
@@ -33,7 +33,8 @@ func (mydb *MyDb) GetTableNames() []string {
 		panic("show tables failed:" + err.Error())
 	}
 	defer rs.Close()
-	tables := []string{}
+
+	var tables []string
 	columns, _ := rs.Columns()
 	for rs.Next() {
 		var values = make([]interface{}, len(columns))

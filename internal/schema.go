@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -14,23 +15,24 @@ type MySchema struct {
 }
 
 func (mys *MySchema) String() string {
-	s := "Fields:\n"
+	var buf bytes.Buffer
+	buf.WriteString("Fields:\n")
 	fl := maxMapKeyLen(mys.Fields, 2)
 	for name, v := range mys.Fields {
-		s += fmt.Sprintf("  %"+fl+"s : %s\n", name, v)
+		buf.WriteString(fmt.Sprintf("  %"+fl+"s : %s\n", name, v))
 	}
 
-	s += "Index:\n"
+	buf.WriteString("Index:\n")
 	fl = maxMapKeyLen(mys.IndexAll, 2)
 	for name, idx := range mys.IndexAll {
-		s += fmt.Sprintf("  %"+fl+"s : %s\n", name, idx.SQL)
+		buf.WriteString(fmt.Sprintf("  %"+fl+"s : %s\n", name, idx.SQL))
 	}
-	s += "ForeignKey:\n"
+	buf.WriteString("ForeignKey:\n")
 	fl = maxMapKeyLen(mys.ForeignAll, 2)
 	for name, idx := range mys.ForeignAll {
-		s += fmt.Sprintf("  %"+fl+"s : %s\n", name, idx.SQL)
+		buf.WriteString(fmt.Sprintf("  %"+fl+"s : %s\n", name, idx.SQL))
 	}
-	return s
+	return buf.String()
 }
 
 // GetFieldNames table names

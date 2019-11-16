@@ -25,7 +25,7 @@ func (at alterType) String() string {
 	case alterTypeAlter:
 		return "alter"
 	default:
-		return "unknow"
+		return "unknown"
 	}
 
 }
@@ -43,7 +43,7 @@ func (ta *TableAlterData) String() string {
 	fmtStr := `
 -- Table : %s
 -- Type  : %s
--- RealtionTables : %s
+-- RelationTables : %s
 -- SQL   : 
 %s
 `

@@ -10,10 +10,12 @@ import (
 
 // DbIndex db index
 type DbIndex struct {
-	IndexType      indexType
-	Name           string
-	SQL            string
-	RelationTables []string //相关联的表
+	IndexType indexType
+	Name      string
+	SQL       string
+
+	// 相关联的表
+	RelationTables []string
 }
 
 type indexType string
@@ -25,7 +27,7 @@ const (
 )
 
 func (idx *DbIndex) alterAddSQL(drop bool) string {
-	alterSQL := []string{}
+	var alterSQL []string
 	if drop {
 		dropSQL := idx.alterDropSQL()
 		if dropSQL != "" {
@@ -58,7 +60,7 @@ func (idx *DbIndex) alterDropSQL() string {
 	case indexTypeForeignKey:
 		return fmt.Sprintf("DROP FOREIGN KEY `%s`", idx.Name)
 	default:
-		log.Fatalln("unknow indexType", idx.IndexType)
+		log.Fatalln("unknown indexType", idx.IndexType)
 	}
 	return ""
 }
@@ -99,7 +101,7 @@ func parseDbIndexLine(line string) *DbIndex {
 		return idx
 	}
 
-	//CONSTRAINT `busi_table_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `repo_table` (`repo_id`)
+	// CONSTRAINT `busi_table_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `repo_table` (`repo_id`)
 	foreignMatches := foreignKeyReg.FindStringSubmatch(line)
 	if len(foreignMatches) > 0 {
 		idx.IndexType = indexTypeForeignKey
@@ -108,6 +110,6 @@ func parseDbIndexLine(line string) *DbIndex {
 		return idx
 	}
 
-	log.Fatalln("db_index parse failed,unsupport,line:", line)
+	log.Fatalln("db_index parse failed,unsupported,line:", line)
 	return nil
 }
