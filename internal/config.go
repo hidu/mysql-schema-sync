@@ -97,7 +97,7 @@ func (cfg *Config) Check() {
 	if cfg.DestDSN == "" {
 		log.Fatal("dest dns is empty")
 	}
-	//	log.Println("config:\n", cfg)
+	// log.Println("config:\n", cfg)
 }
 
 // IsIgnoreIndex is index ignore

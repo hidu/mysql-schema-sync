@@ -92,9 +92,9 @@ func ParseSchema(schema string) *MySchema {
 			}
 		}
 	}
-	//	fmt.Println(schema)
-	//	fmt.Println(mys)
-	//	fmt.Println("-----")
+	// fmt.Println(schema)
+	// fmt.Println(mys)
+	// fmt.Println("-----")
 	return mys
 
 }

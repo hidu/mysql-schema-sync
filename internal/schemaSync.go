@@ -76,7 +76,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	table := alter.Table
 
 	var alterLines []string
-	//比对字段
+	// 比对字段
 	for name, dt := range sourceMyS.Fields {
 		if sc.Config.IsIgnoreField(table, name) {
 			log.Printf("ignore column %s.%s", table, name)
@@ -98,7 +98,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 	}
 
-	//源库已经删除的字段
+	// 源库已经删除的字段
 	if sc.Config.Drop {
 		for name := range destMyS.Fields {
 			if sc.Config.IsIgnoreField(table, name) {
@@ -115,9 +115,9 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 	}
 
-	//多余的字段暂不删除
+	// 多余的字段暂不删除
 
-	//比对索引
+	// 比对索引
 	for indexName, idx := range sourceMyS.IndexAll {
 		if sc.Config.IsIgnoreIndex(table, indexName) {
 			log.Printf("ignore index %s.%s", table, indexName)
@@ -141,7 +141,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 	}
 
-	//drop index
+	// drop index
 	if sc.Config.Drop {
 		for indexName, dIdx := range destMyS.IndexAll {
 			if sc.Config.IsIgnoreIndex(table, indexName) {
@@ -162,7 +162,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 	}
 
-	//比对外键
+	// 比对外键
 	for foreignName, idx := range sourceMyS.ForeignAll {
 		if sc.Config.IsIgnoreForeignKey(table, foreignName) {
 			log.Printf("ignore foreignName %s.%s", table, foreignName)
@@ -186,7 +186,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 	}
 
-	//drop 外键
+	// drop 外键
 	if sc.Config.Drop {
 		for foreignName, dIdx := range destMyS.ForeignAll {
 			if sc.Config.IsIgnoreForeignKey(table, foreignName) {
@@ -222,7 +222,7 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 	t := newMyTimer()
 	ret, err := sc.DestDb.Query(sqlStr)
 
-	//how to enable allowMultiQueries?
+	// how to enable allowMultiQueries?
 	if err != nil && len(sqls) > 1 {
 		log.Println("exec_mut_query failed,err=", err, ",now exec sqls foreach")
 		tx, errTx := sc.DestDb.Db.Begin()
@@ -284,9 +284,9 @@ func CheckSchemaDiff(cfg *Config) {
 			fmt.Println(sd)
 			fmt.Println("")
 			relationTables := sd.SchemaDiff.RelationTables()
-			//			fmt.Println("relationTables:",table,relationTables)
+			// fmt.Println("relationTables:",table,relationTables)
 
-			//将所有有外键关联的单独放
+			// 将所有有外键关联的单独放
 			groupKey := "multi"
 			if len(relationTables) == 0 {
 				groupKey = "single_" + table
@@ -305,7 +305,7 @@ func CheckSchemaDiff(cfg *Config) {
 	countSuccess := 0
 	countFailed := 0
 	canRunTypePref := "single"
-	//先执行单个表的
+	// 先执行单个表的
 run_sync:
 	for typeName, sds := range changedTables {
 		if !strings.HasPrefix(typeName, canRunTypePref) {
@@ -340,9 +340,9 @@ run_sync:
 			st.timer.stop()
 		}
 
-	} //end for
+	} // end for
 
-	//最后再执行多个表的alter
+	// 最后再执行多个表的alter
 	if canRunTypePref == "single" {
 		canRunTypePref = "multi"
 		goto run_sync

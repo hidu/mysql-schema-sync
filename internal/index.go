@@ -72,10 +72,10 @@ func (idx *DbIndex) addRelationTable(table string) {
 	}
 }
 
-//匹配索引字段
+// 匹配索引字段
 var indexReg = regexp.MustCompile(`^([A-Z]+\s)?KEY\s`)
 
-//匹配外键
+// 匹配外键
 var foreignKeyReg = regexp.MustCompile("^CONSTRAINT `(.+)` FOREIGN KEY.+ REFERENCES `(.+)` ")
 
 func parseDbIndexLine(line string) *DbIndex {
@@ -90,10 +90,10 @@ func parseDbIndexLine(line string) *DbIndex {
 		return idx
 	}
 
-	//  UNIQUE KEY `idx_a` (`a`) USING HASH COMMENT '注释',
-	//  FULLTEXT KEY `c` (`c`)
-	//  PRIMARY KEY (`d`)
-	//  KEY `idx_e` (`e`),
+	// UNIQUE KEY `idx_a` (`a`) USING HASH COMMENT '注释',
+	// FULLTEXT KEY `c` (`c`)
+	// PRIMARY KEY (`d`)
+	// KEY `idx_e` (`e`),
 	if indexReg.MatchString(line) {
 		arr := strings.Split(line, "`")
 		idx.IndexType = indexTypeIndex
