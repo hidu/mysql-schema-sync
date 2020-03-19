@@ -12,6 +12,7 @@ type EmailStruct struct {
 	SendMailAble bool   `json:"send_mail"`
 	SMTPHost     string `json:"smtp_host"`
 	From         string `json:"from"`
+	Nick         string `json:"nick"`
 	Password     string `json:"password"`
 	To           string `json:"to"`
 }
@@ -68,10 +69,10 @@ func (m *EmailStruct) SendMail(title string, body string) {
 	body = tableStyle + "\n" + body
 	body += "<br/><hr style='border:none;border-top:1px solid #ccc'/><center>Powered by <a href='" + AppURL + "'>mysql-schema-sync</a>&nbsp;" + Version + "</center>"
 
-	msgBody := fmt.Sprintf("To: %s\r\nContent-Type: text/html;charset=utf-8\r\nSubject: %s\r\n\r\n%s", strings.Join(sendTo, ";"), title, body)
+	msgBody := fmt.Sprintf("From: %s <%s>\r\nTo: %s\r\nContent-Type: text/html;charset=utf-8\r\nSubject: %s\r\n\r\n%s", m.Nick, m.From, strings.Join(sendTo, ";"), title, body)
 	err := smtp.SendMail(m.SMTPHost, auth, m.From, sendTo, []byte(msgBody))
 	if err == nil {
-		log.Println("send mail success")
+		log.Println("send mail success: " + m.To)
 	} else {
 		log.Println("send mail failed,err:", err)
 	}

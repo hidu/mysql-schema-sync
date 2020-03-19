@@ -64,6 +64,43 @@ func (mydb *MyDb) GetTableNames() []string {
 	return tables
 }
 
+func (mydb *MyDb) GetDataBases() []string {
+	rs, err := mydb.Query("show databases")
+	if err != nil {
+		panic("show databases failed:" + err.Error())
+	}
+	defer rs.Close()
+
+	var dbs []string
+	columns, _ := rs.Columns()
+	for rs.Next() {
+		var values = make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range columns {
+			valuePtrs[i] = &values[i]
+		}
+		if err := rs.Scan(valuePtrs...); err != nil {
+			panic("show DATABASES failed when scan," + err.Error())
+		}
+		var valObj = make(map[string]interface{})
+		for i, col := range columns {
+			var v interface{}
+			val := values[i]
+			b, ok := val.([]byte)
+			if ok {
+				v = string(b)
+			} else {
+				v = val
+			}
+			valObj[col] = v
+		}
+		if valObj["Database"] != nil {
+			dbs = append(dbs, valObj["Database"].(string))
+		}
+	}
+	return dbs
+}
+
 // GetTableSchema table schema
 func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 	rs, err := mydb.Query(fmt.Sprintf("show create table `%s`", name))

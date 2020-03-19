@@ -137,13 +137,18 @@ func (s *statics) sendMailNotice(cfg *Config) {
 		log.Println("no table change,skip send mail")
 		return
 	}
-	title := "[mysql_schema_sync] " + fmt.Sprintf("%d", alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
+
+	title := ""
 	body := ""
 
 	if !s.Config.Sync {
-		title += "[preview]"
-		body += "<font color=red>this is preview,all sql never execute!</font>\n"
+		title += "[表结构变化预览] "
+		body += "<font color=red> 以下为 SQL 预览，并未执行!</font>\n"
+	} else {
+		title += "[[表结构自动同步] "
 	}
+
+	title += fmt.Sprintf("%d", alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
 
 	hostName, _ := os.Hostname()
 	body += "<h2>Info</h2>\n<pre>"
