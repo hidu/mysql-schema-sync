@@ -5,12 +5,13 @@ if [ ! -d "log" ];then
    mkdir -p log
 fi
 
-exec 1>>log/sync.log.`date +"%Y%m%d"` 2>&1
+exec 1>>log/sync.log.`date +"%Y%m%d.%H%M"` 2>&1
 
 
 for f in `ls *.json`
 do
-        ./mysql-schema-sync -conf $f -sync
+#        ./mysql-schema-sync -conf $f -sync
+        ./mysql-schema-sync -conf $f 
 done
 
 
