@@ -23,3 +23,8 @@ _testmain.go
 *.test
 *.prof
 log/
+
+.vscode/
+mysql-schema-sync
+*.code-workspace
+rc_task/

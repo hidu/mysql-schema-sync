@@ -23,6 +23,7 @@ func NewSchemaSync(config *Config) *SchemaSync {
 	return s
 }
 
+// ReplaceDb 替换json中数据库名
 func ReplaceDb(config *Config, currentDB string) *SchemaSync {
 	regex := regexp.MustCompile("/.*")
 	srcDSN := regex.ReplaceAllString(config.SourceDSN, "/"+currentDB)
@@ -278,10 +279,10 @@ func CheckSchemaDiff(cfg *Config) {
 	log.Println("Scanning databases total:", len(dbs))
 
 	for index, currentDB := range dbs {
-		log.Printf("Current DB[%d] : %s\n", index, currentDB)
+		log.Printf("Current DB [%d]th of %d : %s\n", index, len(dbs), currentDB)
 
 		// sc := NewSchemaSync(cfg)z
-		sc := ReplaceDb(cfg, dbs[index])
+		sc := ReplaceDb(cfg, currentDB)
 
 		newTables := sc.SourceDb.GetTableNames()
 		log.Println("source db table total:", len(newTables))
@@ -289,7 +290,7 @@ func CheckSchemaDiff(cfg *Config) {
 		changedTables := make(map[string][]*TableAlterData)
 
 		for index, table := range newTables {
-			log.Printf("Index : %d Table : %s\n", index, table)
+			log.Printf("%s Index : %d Table : %s\n", currentDB, index, table)
 			if !cfg.CheckMatchTables(table) {
 				log.Println("Table:", table, "skip")
 				continue
