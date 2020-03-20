@@ -24,15 +24,8 @@ _testmain.go
 *.prof
 log/
 
-<<<<<<< HEAD
 .vscode
 mysql-schema-sync
 *.code-workspace
 rc_task/mysql-schema-sync
 
-=======
-.vscode/
-mysql-schema-sync
-*.code-workspace
-rc_task/
->>>>>>> master
