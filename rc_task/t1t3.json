@@ -1,0 +1,27 @@
+{
+     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.0.108:3306)/test",
+     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.3.234:3306)/test",
+     
+     "alter_ignore":{
+        "tb1*":{
+            "column":["aaa","a*"],
+            "index":["aa"],
+            "foreign":[]
+        }
+     },
+    //  dbs: dbss to check schema, 
+     "databases":["rc_video_chat","rc_live_chat_statistics","rc_push_db","rc_pay","rc_live_chat_job","rc_live_chat_raffle"],
+
+     //  tables: table to check schema,default is all.eg :["order_*","goods"]
+     "tables":[],
+     //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
+     "tables_ignore":[],
+     "email":{
+         "send_mail":true,
+         "smtp_host":"smtp.exmail.qq.com:25",
+         "from":"qa.notifier@rcplatformhk.com",
+         "nick":"QA",
+         "password":"Rcqa1234",
+         "to":"shixiaopeng@rcplatformhk.com;"
+     }
+}
