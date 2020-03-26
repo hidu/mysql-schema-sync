@@ -1,6 +1,6 @@
 {
-     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.0.108:3306)/test",
-     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.3.234:3306)/test",
+     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.0.108:3306)/rc_video_chat",
+     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.3.234:3306)/rc_video_chat",
      
      "alter_ignore":{
         "tb1*":{
@@ -10,8 +10,8 @@
         }
      },
     //  dbs: dbss to check schema, 
-     "databases":["rc_video_chat","rc_live_chat_statistics","rc_push_db","rc_pay","rc_live_chat_job","rc_live_chat_raffle"],
 
+    "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle","rc_push_db"],
      //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
      //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
@@ -22,6 +22,6 @@
          "from":"qa.notifier@rcplatformhk.com",
          "nick":"QA",
          "password":"Rcqa1234",
-         "to":"shixiaopeng@rcplatformhk.com;"
+         "to":"shixiaopeng@rcplatformhk.com;liushuangxi@rcplatformhk.com;"
      }
 }
