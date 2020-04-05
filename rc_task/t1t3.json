@@ -20,8 +20,8 @@
          "send_mail":true,
          "smtp_host":"smtp.exmail.qq.com:25",
          "from":"qa.notifier@rcplatformhk.com",
-         "nick":"QA",
+         "nick":"东京库Schema变更通知",
          "password":"Rcqa1234",
-         "to":"shixiaopeng@rcplatformhk.com;liushuangxi@rcplatformhk.com;"
+         "to":"qa@rcplatformhk.com;dev@rcplatformhk.com;devops@rcplatformhk.com;bigdata@rcplatformhk.com"
      }
 }

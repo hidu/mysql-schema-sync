@@ -17,11 +17,11 @@
      //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
      "tables_ignore":[],
      "email":{
-         "send_mail":false,
-         "smtp_host":"smtp.exmail.qq.com:25",
-         "from":"centos@rcqa.com",
-         "nick":"QA",
-         "password":"Rcqa1234",
-         "to":"shixiaopeng@rcplatformhk.com"
+        "send_mail":true,
+        "smtp_host":"smtp.exmail.qq.com:25",
+        "from":"qa.notifier@rcplatformhk.com",
+        "nick":"东京库Schema变更通知",
+        "password":"Rcqa1234",
+        "to":"qa@rcplatformhk.com;dev@rcplatformhk.com;devops@rcplatformhk.com;bigdata@rcplatformhk.com"
      }
 }
