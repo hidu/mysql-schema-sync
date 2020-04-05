@@ -10,7 +10,7 @@
         }
      },
 
-     "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle","rc_push_db"],
+     "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle"],
 
      //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
