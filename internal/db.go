@@ -64,6 +64,7 @@ func (mydb *MyDb) GetTableNames() []string {
 	return tables
 }
 
+// GetDataBases get all databases
 func (mydb *MyDb) GetDataBases() []string {
 	rs, err := mydb.Query("show databases")
 	if err != nil {
@@ -102,8 +103,8 @@ func (mydb *MyDb) GetDataBases() []string {
 }
 
 // GetTableSchema table schema
-func (mydb *MyDb) GetTableSchema(name string) (schema string) {
-	rs, err := mydb.Query(fmt.Sprintf("show create table `%s`", name))
+func (mydb *MyDb) GetTableSchema(tableName string) (schema string) {
+	rs, err := mydb.Query(fmt.Sprintf("show create table `%s`", tableName))
 	if err != nil {
 		log.Println(err)
 		return
@@ -112,7 +113,24 @@ func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 	for rs.Next() {
 		var vname string
 		if err := rs.Scan(&vname, &schema); err != nil {
-			panic(fmt.Sprintf("get table %s 's schema failed,%s", name, err))
+			panic(fmt.Sprintf("get table %s 's schema failed,%s", tableName, err))
+		}
+	}
+	return
+}
+
+// GetTableSchemaTime get table's schema change time
+func (mydb *MyDb) GetTableSchemaTime(dbName, tableName string) (schemaTime string) {
+	rs, err := mydb.Query(fmt.Sprintf("SELECT CREATE_TIME FROM information_schema.TABLES WHERE TABLE_SCHEMA='%s' and TABLE_NAME='%s'", dbName, tableName))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer rs.Close()
+	for rs.Next() {
+		// var vname string
+		if err := rs.Scan(&schemaTime); err != nil {
+			panic(fmt.Sprintf("get table %s's schemaTime failed,%s", tableName, err))
 		}
 	}
 	return

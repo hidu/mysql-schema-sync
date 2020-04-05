@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // MySchema table schema
@@ -12,6 +13,7 @@ type MySchema struct {
 	Fields     map[string]string
 	IndexAll   map[string]*DbIndex
 	ForeignAll map[string]*DbIndex
+	SchemaTime time.Time
 }
 
 func (mys *MySchema) String() string {
@@ -59,7 +61,7 @@ func (mys *MySchema) RelationTables() []string {
 }
 
 // ParseSchema parse table's schema
-func ParseSchema(schema string) *MySchema {
+func ParseSchema(schema string, schemaTime time.Time) *MySchema {
 	schema = strings.TrimSpace(schema)
 	lines := strings.Split(schema, "\n")
 	mys := &MySchema{
@@ -67,6 +69,7 @@ func ParseSchema(schema string) *MySchema {
 		Fields:     make(map[string]string),
 		IndexAll:   make(map[string]*DbIndex, 0),
 		ForeignAll: make(map[string]*DbIndex, 0),
+		SchemaTime: schemaTime,
 	}
 
 	for i := 1; i < len(lines)-1; i++ {
@@ -105,11 +108,11 @@ type SchemaDiff struct {
 	Dest   *MySchema
 }
 
-func newSchemaDiff(table, source, dest string) *SchemaDiff {
+func newSchemaDiff(table, source, dest string, sourceTime, dstTime time.Time) *SchemaDiff {
 	return &SchemaDiff{
 		Table:  table,
-		Source: ParseSchema(source),
-		Dest:   ParseSchema(dest),
+		Source: ParseSchema(source, sourceTime),
+		Dest:   ParseSchema(dest, dstTime),
 	}
 }
 

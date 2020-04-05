@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // SchemaSync 配置文件
@@ -51,7 +52,7 @@ func (sc *SchemaSync) GetNewTableNames() []string {
 	return newTables
 }
 
-func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
+func (sc *SchemaSync) getAlterDataByTable(dbName, table string) *TableAlterData {
 	alter := new(TableAlterData)
 	alter.Table = table
 	alter.Type = alterTypeNo
@@ -59,7 +60,15 @@ func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
 	sschema := sc.SourceDb.GetTableSchema(table)
 	dschema := sc.DestDb.GetTableSchema(table)
 
-	alter.SchemaDiff = newSchemaDiff(table, sschema, dschema)
+	sschemaTime1 := sc.SourceDb.GetTableSchemaTime(dbName, table)
+	dschemaTime1 := sc.DestDb.GetTableSchemaTime(dbName, table)
+	// log.Printf("%s.%s schemaTime: [src | %s], [dst | %s], ", dbName, table, sschemaTime1, dschemaTime1)
+
+	timeFormat := "2006-01-02 15:04:05"
+	sschemaTime, _ := time.ParseInLocation(timeFormat, sschemaTime1, time.Local)
+	dschemaTime, _ := time.ParseInLocation(timeFormat, dschemaTime1, time.Local)
+	log.Printf("%s.%s's schema.time: %s, %s", dbName, table, sschemaTime, dschemaTime)
+	alter.SchemaDiff = newSchemaDiff(table, sschema, dschema, sschemaTime, dschemaTime)
 
 	if sschema == dschema {
 		return alter
@@ -87,9 +96,20 @@ func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
 func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	sourceMyS := alter.SchemaDiff.Source
 	destMyS := alter.SchemaDiff.Dest
+	sourceSchemaTime := alter.SchemaDiff.Source.SchemaTime
+	destSchemaTime := alter.SchemaDiff.Dest.SchemaTime
 	table := alter.Table
 
 	var alterLines []string
+
+	// 比较 Schema 修改时间，确保新结构覆盖老表结构
+	// if sourceSchemaTime != nil && destSchemaTime != nil {
+	if sourceSchemaTime.Before(destSchemaTime) {
+		log.Printf("ignore alter %s, schema.time: [%s],[%s]", table, sourceSchemaTime, destSchemaTime)
+		return ""
+	}
+	// }
+
 	// 比对字段
 	for name, dt := range sourceMyS.Fields {
 		if sc.Config.IsIgnoreField(table, name) {
@@ -301,7 +321,7 @@ func CheckSchemaDiff(cfg *Config) {
 				continue
 			}
 
-			sd := sc.getAlterDataByTable(table)
+			sd := sc.getAlterDataByTable(currentDB, table)
 
 			if sd.Type != alterTypeNo {
 				fmt.Println(sd)
