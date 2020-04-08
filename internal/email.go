@@ -3,8 +3,11 @@ package internal
 import (
 	"fmt"
 	"log"
-	"net/smtp"
+
+	// "mysmtp"
 	"strings"
+
+	"github.com/hidu/mysql-schema-sync/internal/mysmtp"
 )
 
 // EmailStruct email conf info
@@ -50,7 +53,7 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		log.Println("smtp_host wrong,eg: host_name:25")
 		return
 	}
-	auth := smtp.PlainAuth("", m.From, m.Password, addrInfo[0])
+	auth := mysmtp.LoginAuth(m.From, m.Password, addrInfo[0])
 
 	_sendTo := strings.Split(m.To, ";")
 	var sendTo []string
@@ -70,7 +73,7 @@ func (m *EmailStruct) SendMail(title string, body string) {
 	body += "<br/><hr style='border:none;border-top:1px solid #ccc'/><center>Powered by <a href='" + AppURL + "'>mysql-schema-sync</a>&nbsp;" + Version + "</center>"
 
 	msgBody := fmt.Sprintf("From: %s <%s>\r\nTo: %s\r\nContent-Type: text/html;charset=utf-8\r\nSubject: %s\r\n\r\n%s", m.Nick, m.From, strings.Join(sendTo, ";"), title, body)
-	err := smtp.SendMail(m.SMTPHost, auth, m.From, sendTo, []byte(msgBody))
+	err := mysmtp.SendMail(m.SMTPHost, auth, m.From, sendTo, []byte(msgBody))
 	if err == nil {
 		log.Println("send mail success: " + m.To)
 	} else {
