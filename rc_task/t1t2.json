@@ -18,7 +18,7 @@
      "tables_ignore":[],
      "email":{
         "send_mail":true,
-        "smtp_host":"smtp.exmail.qq.com:25",
+        "smtp_host":"smtp.rcplatformhk.com:25",
         "from":"qa.notifier@rcplatformhk.com",
         "nick":"东京库Schema变更通知",
         "password":"Rcqa1234",
