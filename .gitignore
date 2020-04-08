@@ -27,5 +27,7 @@ log/
 .vscode
 mysql-schema-sync
 *.code-workspace
-rc_task/mysql-schema-sync
+# # rc_task/mysql-schema-sync
+# rc_task/log
+# rc_task/check.sh
 
