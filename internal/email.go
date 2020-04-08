@@ -7,7 +7,7 @@ import (
 	// "mysmtp"
 	"strings"
 
-	"github.com/hidu/mysql-schema-sync/internal/mysmtp"
+	"github.com/xiaopengshi/mysql-schema-sync/internal/mysmtp"
 )
 
 // EmailStruct email conf info
