@@ -27,7 +27,6 @@ func (at alterType) String() string {
 	default:
 		return "unknown"
 	}
-
 }
 
 // TableAlterData 表的变更情况

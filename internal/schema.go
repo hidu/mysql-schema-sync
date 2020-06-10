@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -69,7 +70,25 @@ func ParseSchema(schema string) *MySchema {
 		ForeignAll: make(map[string]*DbIndex, 0),
 	}
 
-	for i := 1; i < len(lines)-1; i++ {
+	iTabBodyEnd := len(lines) - 1
+	for i := 1; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		if strings.Index(line, ") ENGINE=") != 0 {
+			continue
+		} else {
+			iTabBodyEnd = i
+			break
+		}
+	}
+
+	if iTabBodyEnd != len(lines)-1 {
+		// not accurate still - but reduced the parsing work
+		// - would fatal definitely if continue to parse this ddl
+		// and given a bit clear fatal infomation about why failed/exit
+		log.Fatalln("some ddl (e.g 'partition') not supported:", strings.Join(lines[(iTabBodyEnd+1):], "\n"))
+	}
+
+	for i := 1; i < iTabBodyEnd; i++ {
 		line := strings.TrimSpace(lines[i])
 		if line == "" {
 			continue
@@ -92,11 +111,11 @@ func ParseSchema(schema string) *MySchema {
 			}
 		}
 	}
+
 	// fmt.Println(schema)
 	// fmt.Println(mys)
 	// fmt.Println("-----")
 	return mys
-
 }
 
 type SchemaDiff struct {

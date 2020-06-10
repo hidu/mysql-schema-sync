@@ -1,0 +1,3 @@
+-source 'root:abc123@(127.0.0.1:3306)/test_ss_0' -dest 'root:abc123@(127.0.0.1:3306)/test_ss_1' -sync -drop
+-source 'root:abc123@(127.0.0.1:3306)/test_ss_0' -dest 'root:abc123@(127.0.0.1:3306)/test_ss_1' -sync
+-source 'shane:abc123@(127.0.0.1:3306)/test_ss_0' -dest 'shane:abc123@(127.0.0.1:3306)/test_ss_1'
