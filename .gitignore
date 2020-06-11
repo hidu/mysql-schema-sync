@@ -23,3 +23,9 @@ _testmain.go
 *.test
 *.prof
 log/
+
+# vim .swp
+*.swp
+
+# tags
+tags
