@@ -1,6 +1,6 @@
 {
-     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.2.29:3306)/rc_video_chat",
-     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.4.35:3306)/rc_video_chat",
+     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.3.234:3306)/rc_video_chat",
+     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.2.29:3306)/rc_video_chat",
 
      "alter_ignore":{
         "tb1*":{
@@ -10,8 +10,8 @@
         }
      },
 
-     "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle","rc_certification","rc_promotion","rc_subscription"],
 
+     "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle","rc_certification","rc_promotion","rc_subscription"],
      //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
      //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]

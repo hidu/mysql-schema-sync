@@ -11,7 +11,7 @@
      },
 
 
-     "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle","rc_certification"],
+     "databases":["rc_video_chat","rc_live_chat_statistics","rc_pay","rc_live_chat_job","rc_live_chat_raffle","rc_certification","rc_promotion","rc_subscription"],
      //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],
      //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]

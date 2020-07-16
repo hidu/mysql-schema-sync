@@ -1,6 +1,6 @@
 {
-     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.2.29:3306)/rc_video_chat",
-     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.4.35:3306)/rc_video_chat",
+     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.3.234:3306)/rc_video_chat",
+     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.0.108:3306)/rc_video_chat",
 
      "alter_ignore":{
         "tb1*":{
