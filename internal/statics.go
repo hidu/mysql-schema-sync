@@ -15,6 +15,7 @@ type statics struct {
 
 type tableStatics struct {
 	timer       *myTimer
+	db          string
 	table       string
 	alter       *TableAlterData
 	alterRet    error
@@ -29,9 +30,10 @@ func newStatics(cfg *Config) *statics {
 	}
 }
 
-func (s *statics) newTableStatics(table string, sd *TableAlterData) *tableStatics {
+func (s *statics) newTableStatics(db string, table string, sd *TableAlterData) *tableStatics {
 	ts := &tableStatics{
 		timer: newMyTimer(),
+		db:    db,
 		table: table,
 		alter: sd,
 	}
@@ -57,7 +59,7 @@ func (s *statics) toHTML() string {
 	for idx, tb := range s.tables {
 		code += "<tr>"
 		code += "<td>" + fmt.Sprintf("%d", idx+1) + "</td>\n"
-		code += "<td><a href='#detail_" + tb.table + "'>" + tb.table + "</a></td>\n"
+		code += "<td><a href='#detail_" + tb.db + "." + tb.table + "'>" + tb.db + "." + tb.table + "</a></td>\n"
 		code += "<td>"
 		if s.Config.Sync {
 			if tb.alterRet == nil {

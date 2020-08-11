@@ -361,7 +361,7 @@ func CheckSchemaDiff(cfg *Config) {
 				sql := strings.TrimRight(sd.SQL, ";")
 				sqls = append(sqls, sql)
 
-				st := statics.newTableStatics(sd.Table, sd)
+				st := statics.newTableStatics(currentDB, sd.Table, sd)
 				sts = append(sts, st)
 			}
 
