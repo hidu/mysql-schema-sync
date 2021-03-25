@@ -144,10 +144,10 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	body := ""
 
 	if !s.Config.Sync {
-		title += "[表结构变化预览] "
+		title += "[Schema-Preview] "
 		body += "<font color=red> 以下为 SQL 预览，并未执行!</font>\n"
 	} else {
-		title += "[[表结构自动同步] "
+		title += "[[Schema-Sync] "
 	}
 
 	title += fmt.Sprintf("%d", alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"

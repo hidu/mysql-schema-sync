@@ -1,0 +1,27 @@
+{
+     "source":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.0.108:3306)/test",
+     "dest":"testdb:mofnuWs2YZvLMed&12VKmVFr@(10.10.2.29:3306)/test",
+     
+     "alter_ignore":{
+        "tb1*":{
+            "column":["aaa","a*"],
+            "index":["aa"],
+            "foreign":[]
+        }
+     },
+    //  dbs: dbss to check schema, 
+
+    "databases":[""],
+     //  tables: table to check schema,default is all.eg :["order_*","goods"]
+     "tables":[],
+     //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
+     "tables_ignore":[],
+     "email":{
+        "send_mail":true,
+        "smtp_host":"smtp.xdf.cn:587",
+        "from":"shixiaopeng1@xdf.cn",
+        "nick":"云教室测试库Schema变更通知",
+        "password":"****",
+        "to":"shixiaopeng1@xdf.cn"
+     }
+}

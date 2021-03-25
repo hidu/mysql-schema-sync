@@ -25,6 +25,7 @@ _testmain.go
 log/
 
 .vscode
+.DS_Store
 mysql-schema-sync
 *.code-workspace
 # # rc_task/mysql-schema-sync
