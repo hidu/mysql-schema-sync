@@ -1,4 +1,4 @@
-module github.com/xiaopengshi/mysql-schema-sync
+module github.com/hidu/mysql-schema-sync
 
 go 1.13
 

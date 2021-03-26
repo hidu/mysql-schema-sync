@@ -6,8 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	"github.com/xiaopengshi/mysql-schema-sync/internal"
+	"github.com/hidu/mysql-schema-sync/internal"
 )
 
 var configPath = flag.String("conf", "./rc_task/t.json", "json config file path")
