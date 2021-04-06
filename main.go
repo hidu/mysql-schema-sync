@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hidu/mysql-schema-sync/internal"
+	"github.com/xiaopengshi/mysql-schema-sync/internal"
 )
 
 var configPath = flag.String("conf", "./task_conf/t.json", "json config file path")
