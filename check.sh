@@ -7,8 +7,7 @@ fi
 
 exec 1>>log/sync.log.`date +"%Y%m%d.%H%M"` 2>&1
 
-
-for f in `ls *.json`
+for f in `ls task_conf/*.json`
 do
 #        ./mysql-schema-sync -conf $f -sync
         ./mysql-schema-sync -conf $f 
