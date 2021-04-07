@@ -17,6 +17,9 @@ type Config struct {
 	// AlterIgnore 忽略配置， eg:   "tb1*":{"column":["aaa","a*"],"index":["aa"],"foreign":[]}
 	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
 
+	// databases, 扫描指定库
+	DataBases []string `json:"databases"`
+
 	// Tables 同步表的白名单，若为空，则同步全库
 	Tables []string `json:"tables"`
 
@@ -135,7 +138,7 @@ func (cfg *Config) SendMailFail(errStr string) {
 		return
 	}
 	_host, _ := os.Hostname()
-	title := "[mysql-schema-sync][" + _host + "]failed"
+	title := "[数据库连接异常][" + _host + "]failed"
 	body := "error:<font color=red>" + errStr + "</font><br/>"
 	body += "host:" + _host + "<br/>"
 	body += "config-file:" + cfg.ConfigPath + "<br/>"

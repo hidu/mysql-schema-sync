@@ -23,3 +23,12 @@ _testmain.go
 *.test
 *.prof
 log/
+
+.vscode
+.DS_Store
+mysql-schema-sync
+*.code-workspace
+# # rc_task/mysql-schema-sync
+# rc_task/log
+# rc_task/check.sh
+

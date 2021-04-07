@@ -3,7 +3,9 @@ package internal
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
+	"time"
 )
 
 // SchemaSync 配置文件
@@ -22,6 +24,19 @@ func NewSchemaSync(config *Config) *SchemaSync {
 	return s
 }
 
+// ReplaceDb 替换json中数据库名
+func ReplaceDb(config *Config, currentDB string) *SchemaSync {
+	regex := regexp.MustCompile("/.*")
+	srcDSN := regex.ReplaceAllString(config.SourceDSN, "/"+currentDB)
+	dstDSN := regex.ReplaceAllString(config.DestDSN, "/"+currentDB)
+
+	s := new(SchemaSync)
+	s.Config = config
+	s.SourceDb = NewMyDb(srcDSN, "source")
+	s.DestDb = NewMyDb(dstDSN, "dest")
+	return s
+}
+
 // GetNewTableNames 获取所有新增加的表名
 func (sc *SchemaSync) GetNewTableNames() []string {
 	sourceTables := sc.SourceDb.GetTableNames()
@@ -37,7 +52,7 @@ func (sc *SchemaSync) GetNewTableNames() []string {
 	return newTables
 }
 
-func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
+func (sc *SchemaSync) getAlterDataByTable(dbName, table string) *TableAlterData {
 	alter := new(TableAlterData)
 	alter.Table = table
 	alter.Type = alterTypeNo
@@ -45,7 +60,15 @@ func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
 	sschema := sc.SourceDb.GetTableSchema(table)
 	dschema := sc.DestDb.GetTableSchema(table)
 
-	alter.SchemaDiff = newSchemaDiff(table, sschema, dschema)
+	sschemaTime1 := sc.SourceDb.GetTableSchemaTime(dbName, table)
+	dschemaTime1 := sc.DestDb.GetTableSchemaTime(dbName, table)
+	// log.Printf("%s.%s schemaTime: [src | %s], [dst | %s], ", dbName, table, sschemaTime1, dschemaTime1)
+
+	timeFormat := "2006-01-02 15:04:05"
+	sschemaTime, _ := time.ParseInLocation(timeFormat, sschemaTime1, time.Local)
+	dschemaTime, _ := time.ParseInLocation(timeFormat, dschemaTime1, time.Local)
+	log.Printf("%s.%s's schema.time: %s, %s", dbName, table, sschemaTime, dschemaTime)
+	alter.SchemaDiff = newSchemaDiff(table, sschema, dschema, sschemaTime, dschemaTime)
 
 	if sschema == dschema {
 		return alter
@@ -73,9 +96,20 @@ func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
 func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	sourceMyS := alter.SchemaDiff.Source
 	destMyS := alter.SchemaDiff.Dest
+	sourceSchemaTime := alter.SchemaDiff.Source.SchemaTime
+	destSchemaTime := alter.SchemaDiff.Dest.SchemaTime
 	table := alter.Table
 
 	var alterLines []string
+
+	// 比较 Schema 修改时间，确保新结构覆盖老表结构
+	// if sourceSchemaTime != nil && destSchemaTime != nil {
+	if sourceSchemaTime.Before(destSchemaTime) {
+		log.Printf("ignore alter %s, schema.time: [%s],[%s]", table, sourceSchemaTime, destSchemaTime)
+		return ""
+	}
+	// }
+
 	// 比对字段
 	for name, dt := range sourceMyS.Fields {
 		if sc.Config.IsIgnoreField(table, name) {
@@ -260,96 +294,106 @@ func CheckSchemaDiff(cfg *Config) {
 		statics.sendMailNotice(cfg)
 	})()
 
-	sc := NewSchemaSync(cfg)
-	newTables := sc.SourceDb.GetTableNames()
-	log.Println("source db table total:", len(newTables))
+	// 读取配置的DBs
+	dbs := cfg.DataBases
+	log.Println("Scanning databases total:", len(dbs))
 
-	changedTables := make(map[string][]*TableAlterData)
+	for index, currentDB := range dbs {
+		log.Printf("Current DB [%d]th of %d : %s\n", index, len(dbs), currentDB)
 
-	for index, table := range newTables {
-		log.Printf("Index : %d Table : %s\n", index, table)
-		if !cfg.CheckMatchTables(table) {
-			log.Println("Table:", table, "skip")
-			continue
-		}
+		// sc := NewSchemaSync(cfg)z
+		sc := ReplaceDb(cfg, currentDB)
 
-		if cfg.CheckMatchIgnoreTables(table) == true {
-			log.Println("Table:", table, "skip")
-			continue
-		}
+		newTables := sc.SourceDb.GetTableNames()
+		log.Println("source db table total:", len(newTables))
 
-		sd := sc.getAlterDataByTable(table)
+		changedTables := make(map[string][]*TableAlterData)
 
-		if sd.Type != alterTypeNo {
-			fmt.Println(sd)
-			fmt.Println("")
-			relationTables := sd.SchemaDiff.RelationTables()
-			// fmt.Println("relationTables:",table,relationTables)
-
-			// 将所有有外键关联的单独放
-			groupKey := "multi"
-			if len(relationTables) == 0 {
-				groupKey = "single_" + table
+		for index, table := range newTables {
+			log.Printf("%s Index : %d Table : %s\n", currentDB, index, table)
+			if !cfg.CheckMatchTables(table) {
+				log.Println("Table:", table, "skip")
+				continue
 			}
-			if _, has := changedTables[groupKey]; !has {
-				changedTables[groupKey] = make([]*TableAlterData, 0)
+
+			if cfg.CheckMatchIgnoreTables(table) == true {
+				log.Println("Table:", table, "skip")
+				continue
 			}
-			changedTables[groupKey] = append(changedTables[groupKey], sd)
-		} else {
-			log.Println("table:", table, "not change,", sd)
-		}
-	}
 
-	log.Println("trace changedTables:", changedTables)
+			sd := sc.getAlterDataByTable(currentDB, table)
 
-	countSuccess := 0
-	countFailed := 0
-	canRunTypePref := "single"
-	// 先执行单个表的
-run_sync:
-	for typeName, sds := range changedTables {
-		if !strings.HasPrefix(typeName, canRunTypePref) {
-			continue
-		}
-		log.Println("runSyncType:", typeName)
-		var sqls []string
-		var sts []*tableStatics
-		for _, sd := range sds {
-			sql := strings.TrimRight(sd.SQL, ";")
-			sqls = append(sqls, sql)
+			if sd.Type != alterTypeNo {
+				fmt.Println(sd)
+				fmt.Println("")
+				relationTables := sd.SchemaDiff.RelationTables()
+				// fmt.Println("relationTables:",table,relationTables)
 
-			st := statics.newTableStatics(sd.Table, sd)
-			sts = append(sts, st)
+				// 将所有有外键关联的单独放
+				groupKey := "multi"
+				if len(relationTables) == 0 {
+					groupKey = "single_" + table
+				}
+				if _, has := changedTables[groupKey]; !has {
+					changedTables[groupKey] = make([]*TableAlterData, 0)
+				}
+				changedTables[groupKey] = append(changedTables[groupKey], sd)
+			} else {
+				log.Println("table:", table, "not change,", sd)
+			}
 		}
 
-		sql := strings.Join(sqls, ";\n") + ";"
-		var ret error
+		log.Println("trace changedTables:", changedTables)
+
+		countSuccess := 0
+		countFailed := 0
+		canRunTypePref := "single"
+		// 先执行单个表的
+	run_sync:
+		for typeName, sds := range changedTables {
+			if !strings.HasPrefix(typeName, canRunTypePref) {
+				continue
+			}
+			log.Println("runSyncType:", typeName)
+			var sqls []string
+			var sts []*tableStatics
+			for _, sd := range sds {
+				sql := strings.TrimRight(sd.SQL, ";")
+				sqls = append(sqls, sql)
+
+				st := statics.newTableStatics(currentDB, sd.Table, sd)
+				sts = append(sts, st)
+			}
+
+			sql := strings.Join(sqls, ";\n") + ";"
+			var ret error
+
+			if sc.Config.Sync {
+
+				ret = sc.SyncSQL4Dest(sql, sqls)
+				if ret == nil {
+					countSuccess++
+				} else {
+					countFailed++
+				}
+			}
+			for _, st := range sts {
+				st.alterRet = ret
+				st.schemaAfter = sc.DestDb.GetTableSchema(st.table)
+				st.timer.stop()
+			}
+
+		} // end for
+
+		// 最后再执行多个表的alter
+		if canRunTypePref == "single" {
+			canRunTypePref = "multi"
+			goto run_sync
+		}
 
 		if sc.Config.Sync {
-
-			ret = sc.SyncSQL4Dest(sql, sqls)
-			if ret == nil {
-				countSuccess++
-			} else {
-				countFailed++
-			}
+			log.Println("execute_all_sql_done,success_total:", countSuccess, "failed_total:", countFailed)
 		}
-		for _, st := range sts {
-			st.alterRet = ret
-			st.schemaAfter = sc.DestDb.GetTableSchema(st.table)
-			st.timer.stop()
-		}
-
-	} // end for
-
-	// 最后再执行多个表的alter
-	if canRunTypePref == "single" {
-		canRunTypePref = "multi"
-		goto run_sync
-	}
-
-	if sc.Config.Sync {
-		log.Println("execute_all_sql_done,success_total:", countSuccess, "failed_total:", countFailed)
 	}
 
 }

@@ -15,6 +15,7 @@ type statics struct {
 
 type tableStatics struct {
 	timer       *myTimer
+	db          string
 	table       string
 	alter       *TableAlterData
 	alterRet    error
@@ -29,9 +30,10 @@ func newStatics(cfg *Config) *statics {
 	}
 }
 
-func (s *statics) newTableStatics(table string, sd *TableAlterData) *tableStatics {
+func (s *statics) newTableStatics(db string, table string, sd *TableAlterData) *tableStatics {
 	ts := &tableStatics{
 		timer: newMyTimer(),
+		db:    db,
 		table: table,
 		alter: sd,
 	}
@@ -57,7 +59,7 @@ func (s *statics) toHTML() string {
 	for idx, tb := range s.tables {
 		code += "<tr>"
 		code += "<td>" + fmt.Sprintf("%d", idx+1) + "</td>\n"
-		code += "<td><a href='#detail_" + tb.table + "'>" + tb.table + "</a></td>\n"
+		code += "<td><a href='#detail_" + tb.db + "." + tb.table + "'>" + tb.db + "." + tb.table + "</a></td>\n"
 		code += "<td>"
 		if s.Config.Sync {
 			if tb.alterRet == nil {
@@ -137,13 +139,18 @@ func (s *statics) sendMailNotice(cfg *Config) {
 		log.Println("no table change,skip send mail")
 		return
 	}
-	title := "[mysql_schema_sync] " + fmt.Sprintf("%d", alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
+
+	title := ""
 	body := ""
 
 	if !s.Config.Sync {
-		title += "[preview]"
-		body += "<font color=red>this is preview,all sql never execute!</font>\n"
+		title += "[Schema-Preview] "
+		body += "<font color=red> 以下为 SQL 预览，并未执行!</font>\n"
+	} else {
+		title += "[[Schema-Sync] "
 	}
+
+	title += fmt.Sprintf("%d", alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
 
 	hostName, _ := os.Hostname()
 	body += "<h2>Info</h2>\n<pre>"
