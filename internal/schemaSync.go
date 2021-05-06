@@ -74,38 +74,45 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	sourceMyS := alter.SchemaDiff.Source
 	destMyS := alter.SchemaDiff.Dest
 	table := alter.Table
-
+	var beforeFieldName string = ""
 	var alterLines []string
 	// 比对字段
-	for name, dt := range sourceMyS.Fields {
-		if sc.Config.IsIgnoreField(table, name) {
-			log.Printf("ignore column %s.%s", table, name)
+	for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
+		if sc.Config.IsIgnoreField(table, el.Key.(string)) {
+			log.Printf("ignore column %s.%s", table, el.Key.(string))
 			continue
 		}
 		var alterSQL string
-		if destDt, has := destMyS.Fields[name]; has {
-			if dt != destDt {
-				alterSQL = fmt.Sprintf("CHANGE `%s` %s", name, dt)
+		if destDt, has := destMyS.Fields.Get(el.Key); has {
+			if el.Value != destDt {
+				alterSQL = fmt.Sprintf("CHANGE `%s` %s", el.Key, el.Value)
 			}
+			beforeFieldName = el.Key.(string)
 		} else {
-			alterSQL = "ADD " + dt
+			if len(beforeFieldName) == 0 {
+				alterSQL = "ADD " + el.Value.(string)
+			} else {
+				alterSQL = "ADD " + el.Value.(string) + " AFTER " + beforeFieldName
+			}
+			beforeFieldName = el.Key.(string)
 		}
+
 		if alterSQL != "" {
-			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, name), "alterSQL=", alterSQL)
+			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
 			alterLines = append(alterLines, alterSQL)
 		} else {
-			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, name), "not change")
+			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
 		}
 	}
 
 	// 源库已经删除的字段
 	if sc.Config.Drop {
-		for name := range destMyS.Fields {
-			if sc.Config.IsIgnoreField(table, name) {
+		for _, name := range destMyS.Fields.Keys() {
+			if sc.Config.IsIgnoreField(table, name.(string)) {
 				log.Printf("ignore column %s.%s", table, name)
 				continue
 			}
-			if _, has := sourceMyS.Fields[name]; !has {
+			if _, has := sourceMyS.Fields.Get(name); !has {
 				alterSQL := fmt.Sprintf("drop `%s`", name)
 				alterLines = append(alterLines, alterSQL)
 				log.Println("trace check column.drop ", fmt.Sprintf("%s.%s", table, name), "alterSQL=", alterSQL)
@@ -262,14 +269,14 @@ func CheckSchemaDiff(cfg *Config) {
 
 	sc := NewSchemaSync(cfg)
 	newTables := sc.SourceDb.GetTableNames()
-	log.Println("source db table total:", len(newTables))
+	// log.Println("source db table total:", len(newTables))
 
 	changedTables := make(map[string][]*TableAlterData)
 
-	for index, table := range newTables {
-		log.Printf("Index : %d Table : %s\n", index, table)
+	for _, table := range newTables {
+		// log.Printf("Index : %d Table : %s\n", index, table)
 		if !cfg.CheckMatchTables(table) {
-			log.Println("Table:", table, "skip")
+			// log.Println("Table:", table, "skip")
 			continue
 		}
 
