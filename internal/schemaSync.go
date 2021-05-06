@@ -76,6 +76,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	table := alter.Table
 	var beforeFieldName string = ""
 	var alterLines []string
+	var feildCount int = 0
 	// 比对字段
 	for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
 		if sc.Config.IsIgnoreField(table, el.Key.(string)) {
@@ -90,7 +91,12 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 			beforeFieldName = el.Key.(string)
 		} else {
 			if len(beforeFieldName) == 0 {
-				alterSQL = "ADD " + el.Value.(string)
+				if feildCount == 0 {
+					alterSQL = "ADD " + el.Value.(string) + " FIRST"
+				} else {
+					alterSQL = "ADD " + el.Value.(string)
+				}
+
 			} else {
 				alterSQL = "ADD " + el.Value.(string) + " AFTER " + beforeFieldName
 			}
@@ -103,6 +109,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		} else {
 			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
 		}
+		feildCount++
 	}
 
 	// 源库已经删除的字段
