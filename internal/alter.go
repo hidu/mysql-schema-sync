@@ -8,10 +8,10 @@ import (
 type alterType int
 
 const (
-	alterTypeNo     alterType = 0
-	alterTypeCreate           = 1
-	alterTypeDrop             = 2
-	alterTypeAlter            = 3
+	alterTypeNo alterType = iota
+	alterTypeCreate
+	alterTypeDrop
+	alterTypeAlter
 )
 
 func (at alterType) String() string {

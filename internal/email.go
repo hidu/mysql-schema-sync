@@ -41,12 +41,12 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		return
 	}
 	if m.SMTPHost == "" || m.From == "" || m.To == "" {
-		log.Println("smtp_host,from,to is empty")
+		log.Println("smtp_host, from,to is empty")
 		return
 	}
 	addrInfo := strings.Split(m.SMTPHost, ":")
 	if len(addrInfo) != 2 {
-		log.Println("smtp_host wrong,eg: host_name:25")
+		log.Println("smtp_host wrong, eg: host_name:25")
 		return
 	}
 	auth := smtp.PlainAuth("", m.From, m.Password, addrInfo[0])
@@ -73,6 +73,6 @@ func (m *EmailStruct) SendMail(title string, body string) {
 	if err == nil {
 		log.Println("send mail success")
 	} else {
-		log.Println("send mail failed,err:", err)
+		log.Println("send mail failed, err:", err)
 	}
 }

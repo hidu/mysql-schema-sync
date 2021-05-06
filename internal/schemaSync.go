@@ -42,22 +42,22 @@ func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
 	alter.Table = table
 	alter.Type = alterTypeNo
 
-	sschema := sc.SourceDb.GetTableSchema(table)
-	dschema := sc.DestDb.GetTableSchema(table)
+	sSchema := sc.SourceDb.GetTableSchema(table)
+	dSchema := sc.DestDb.GetTableSchema(table)
 
-	alter.SchemaDiff = newSchemaDiff(table, sschema, dschema)
+	alter.SchemaDiff = newSchemaDiff(table, sSchema, dSchema)
 
-	if sschema == dschema {
+	if sSchema == dSchema {
 		return alter
 	}
-	if sschema == "" {
+	if sSchema == "" {
 		alter.Type = alterTypeDrop
 		alter.SQL = fmt.Sprintf("drop table `%s`;", table)
 		return alter
 	}
-	if dschema == "" {
+	if dSchema == "" {
 		alter.Type = alterTypeCreate
-		alter.SQL = sschema + ";"
+		alter.SQL = sSchema + ";"
 		return alter
 	}
 
@@ -76,7 +76,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 	table := alter.Table
 	var beforeFieldName string = ""
 	var alterLines []string
-	var feildCount int = 0
+	var fieldCount int = 0
 	// 比对字段
 	for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
 		if sc.Config.IsIgnoreField(table, el.Key.(string)) {
@@ -91,7 +91,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 			beforeFieldName = el.Key.(string)
 		} else {
 			if len(beforeFieldName) == 0 {
-				if feildCount == 0 {
+				if fieldCount == 0 {
 					alterSQL = "ADD " + el.Value.(string) + " FIRST"
 				} else {
 					alterSQL = "ADD " + el.Value.(string)
@@ -109,7 +109,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		} else {
 			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
 		}
-		feildCount++
+		fieldCount++
 	}
 
 	// 源库已经删除的字段
@@ -227,10 +227,10 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 
 // SyncSQL4Dest sync schema change
 func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
-	log.Println("Exec_SQL_START:\n>>>>>>\n", sqlStr, "\n<<<<<<<<\n")
+	log.Print("Exec_SQL_START:\n>>>>>>\n", sqlStr, "\n<<<<<<<<\n\n")
 	sqlStr = strings.TrimSpace(sqlStr)
 	if sqlStr == "" {
-		log.Println("sql_is_empty,skip")
+		log.Println("sql_is_empty, skip")
 		return nil
 	}
 	t := newMyTimer()
@@ -238,7 +238,7 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 
 	// how to enable allowMultiQueries?
 	if err != nil && len(sqls) > 1 {
-		log.Println("exec_mut_query failed,err=", err, ",now exec sqls foreach")
+		log.Println("exec_mut_query failed, err=", err, ",now exec SQLs foreach")
 		tx, errTx := sc.DestDb.Db.Begin()
 		if errTx == nil {
 			for _, sql := range sqls {
@@ -251,16 +251,16 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 			if err == nil {
 				err = tx.Commit()
 			} else {
-				tx.Rollback()
+				_ = tx.Rollback()
 			}
 		}
 	}
 	t.stop()
 	if err != nil {
-		log.Println("EXEC_SQL_FAIELD", err)
+		log.Println("EXEC_SQL_FAILED:", err)
 		return err
 	}
-	log.Println("EXEC_SQL_SUCCESS,used:", t.usedSecond())
+	log.Println("EXEC_SQL_SUCCESS, used:", t.usedSecond())
 	cl, err := ret.Columns()
 	log.Println("EXEC_SQL_RET:", cl, err)
 	return err
@@ -287,7 +287,7 @@ func CheckSchemaDiff(cfg *Config) {
 			continue
 		}
 
-		if cfg.CheckMatchIgnoreTables(table) == true {
+		if cfg.CheckMatchIgnoreTables(table) {
 			log.Println("Table:", table, "skip")
 			continue
 		}
@@ -363,7 +363,7 @@ run_sync:
 	}
 
 	if sc.Config.Sync {
-		log.Println("execute_all_sql_done,success_total:", countSuccess, "failed_total:", countFailed)
+		log.Println("execute_all_sql_done, success_total:", countSuccess, "failed_total:", countFailed)
 	}
 
 }

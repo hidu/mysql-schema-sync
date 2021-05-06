@@ -22,8 +22,8 @@ type indexType string
 
 const (
 	indexTypePrimary    indexType = "PRIMARY"
-	indexTypeIndex                = "INDEX"
-	indexTypeForeignKey           = "FOREIGN KEY"
+	indexTypeIndex      indexType = "INDEX"
+	indexTypeForeignKey indexType = "FOREIGN KEY"
 )
 
 func (idx *DbIndex) alterAddSQL(drop bool) string {
@@ -41,7 +41,7 @@ func (idx *DbIndex) alterAddSQL(drop bool) string {
 	case indexTypeIndex, indexTypeForeignKey:
 		alterSQL = append(alterSQL, fmt.Sprintf("ADD %s", idx.SQL))
 	default:
-		log.Fatalln("unknow indexType", idx.IndexType)
+		log.Fatalln("unknown indexType", idx.IndexType)
 	}
 	return strings.Join(alterSQL, ",\n")
 }
@@ -110,6 +110,6 @@ func parseDbIndexLine(line string) *DbIndex {
 		return idx
 	}
 
-	log.Fatalln("db_index parse failed,unsupported,line:", line)
+	log.Fatalln("db_index parse failed, unsupported, line:", line)
 	return nil
 }

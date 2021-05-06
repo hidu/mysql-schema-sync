@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
 // MyDb db struct
@@ -75,7 +75,7 @@ func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 	for rs.Next() {
 		var vname string
 		if err := rs.Scan(&vname, &schema); err != nil {
-			panic(fmt.Sprintf("get table %s 's schema failed,%s", name, err))
+			panic(fmt.Sprintf("get table %s 's schema failed, %s", name, err))
 		}
 	}
 	return

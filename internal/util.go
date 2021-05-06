@@ -13,7 +13,7 @@ import (
 )
 
 // Version version
-const Version = "0.3.1"
+const Version = "0.3.2"
 
 // AppURL site
 const AppURL = "https://github.com/hidu/mysql-schema-sync/"
@@ -59,9 +59,9 @@ func simpleMatch(patternStr string, str string, msg ...string) bool {
 	if err != nil {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
 	}
-	if match {
-		// log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
-	}
+	// if match {
+	// log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
+	// }
 	return match
 }
 

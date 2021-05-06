@@ -67,8 +67,8 @@ func ParseSchema(schema string) *MySchema {
 	mys := &MySchema{
 		SchemaRaw:  schema,
 		Fields:     orderedmap.NewOrderedMap(),
-		IndexAll:   make(map[string]*DbIndex, 0),
-		ForeignAll: make(map[string]*DbIndex, 0),
+		IndexAll:   make(map[string]*DbIndex),
+		ForeignAll: make(map[string]*DbIndex),
 	}
 
 	for i := 1; i < len(lines)-1; i++ {

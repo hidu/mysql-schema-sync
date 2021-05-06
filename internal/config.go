@@ -50,8 +50,8 @@ type AlterIgnoreTable struct {
 
 // IsIgnoreField isIgnore
 func (cfg *Config) IsIgnoreField(table string, name string) bool {
-	for tname, dit := range cfg.AlterIgnore {
-		if simpleMatch(tname, table, "IsIgnoreField_table") {
+	for tableName, dit := range cfg.AlterIgnore {
+		if simpleMatch(tableName, table, "IsIgnoreField_table") {
 			for _, col := range dit.Column {
 				if simpleMatch(col, name, "IsIgnoreField_colum") {
 					return true
@@ -92,18 +92,18 @@ func (cfg *Config) CheckMatchIgnoreTables(name string) bool {
 // Check check config
 func (cfg *Config) Check() {
 	if cfg.SourceDSN == "" {
-		log.Fatal("source dns is empty")
+		log.Fatal("source DSN is empty")
 	}
 	if cfg.DestDSN == "" {
-		log.Fatal("dest dns is empty")
+		log.Fatal("dest DSN is empty")
 	}
 	// log.Println("config:\n", cfg)
 }
 
 // IsIgnoreIndex is index ignore
 func (cfg *Config) IsIgnoreIndex(table string, name string) bool {
-	for tname, dit := range cfg.AlterIgnore {
-		if simpleMatch(tname, table, "IsIgnoreIndex_table") {
+	for tableName, dit := range cfg.AlterIgnore {
+		if simpleMatch(tableName, table, "IsIgnoreIndex_table") {
 			for _, index := range dit.Index {
 				if simpleMatch(index, name) {
 					return true
@@ -116,8 +116,8 @@ func (cfg *Config) IsIgnoreIndex(table string, name string) bool {
 
 // IsIgnoreForeignKey 检查外键是否忽略掉
 func (cfg *Config) IsIgnoreForeignKey(table string, name string) bool {
-	for tname, dit := range cfg.AlterIgnore {
-		if simpleMatch(tname, table, "IsIgnoreForeignKey_table") {
+	for tableName, dit := range cfg.AlterIgnore {
+		if simpleMatch(tableName, table, "IsIgnoreForeignKey_table") {
 			for _, foreignName := range dit.ForeignKey {
 				if simpleMatch(foreignName, name) {
 					return true
