@@ -37,40 +37,65 @@ func (sc *SchemaSync) GetNewTableNames() []string {
 	return newTables
 }
 
-func (sc *SchemaSync) getAlterDataByTable(table string) *TableAlterData {
+// 合并源数据库和目标数据库的表名
+func (sc *SchemaSync) GetTableNames() []string {
+	sourceTables := sc.SourceDb.GetTableNames()
+	destTables := sc.DestDb.GetTableNames()
+	var tables []string
+	tables = append(tables, destTables...)
+	for _, name := range sourceTables {
+		if !inStringSlice(name, tables) {
+			tables = append(tables, name)
+		}
+	}
+	return tables
+}
+
+// 删除表创建引擎信息，编码信息，分区信息，已修复同步表结构遇到分区表异常退出问题，对于分区表，只会同步字段，索引，主键，外键的变更
+func RemoveTableSchemaConfig(schema string) string {
+	return strings.Split(schema, "ENGINE")[0]
+}
+
+func (sc *SchemaSync) getAlterDataByTable(table string, cfg *Config) *TableAlterData {
 	alter := new(TableAlterData)
 	alter.Table = table
 	alter.Type = alterTypeNo
 
 	sSchema := sc.SourceDb.GetTableSchema(table)
 	dSchema := sc.DestDb.GetTableSchema(table)
-
-	alter.SchemaDiff = newSchemaDiff(table, sSchema, dSchema)
+	alter.SchemaDiff = newSchemaDiff(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema))
 
 	if sSchema == dSchema {
 		return alter
 	}
 	if sSchema == "" {
 		alter.Type = alterTypeDrop
-		alter.SQL = fmt.Sprintf("drop table `%s`;", table)
+		alter.SQL = append(alter.SQL, fmt.Sprintf("drop table `%s`;", table))
 		return alter
 	}
 	if dSchema == "" {
 		alter.Type = alterTypeCreate
-		alter.SQL = sSchema + ";"
+		alter.SQL = append(alter.SQL, sSchema+";")
 		return alter
 	}
 
 	diff := sc.getSchemaDiff(alter)
-	if diff != "" {
-		alter.Type = alterTypeAlter
-		alter.SQL = fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, diff)
+	if len(diff) == 0 {
+		return alter
+	}
+	alter.Type = alterTypeAlter
+	if cfg.SingleSchemaChange {
+		for _, diffSql := range diff {
+			alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, diffSql))
+		}
+	} else {
+		alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, strings.Join(diff, ",\n")))
 	}
 
 	return alter
 }
 
-func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
+func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	sourceMyS := alter.SchemaDiff.Source
 	destMyS := alter.SchemaDiff.Dest
 	table := alter.Table
@@ -139,17 +164,17 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 		dIdx, has := destMyS.IndexAll[indexName]
 		log.Println("trace indexName---->[", fmt.Sprintf("%s.%s", table, indexName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
-		alterSQL := ""
+		var alterSQLs []string
 		if has {
 			if idx.SQL != dIdx.SQL {
-				alterSQL = idx.alterAddSQL(true)
+				alterSQLs = append(alterSQLs, idx.alterAddSQL(true)...)
 			}
 		} else {
-			alterSQL = idx.alterAddSQL(false)
+			alterSQLs = append(alterSQLs, idx.alterAddSQL(false)...)
 		}
-		if alterSQL != "" {
-			alterLines = append(alterLines, alterSQL)
-			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", alterSQL)
+		if len(alterSQLs) > 0 {
+			alterLines = append(alterLines, alterSQLs...)
+			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", alterSQLs)
 		} else {
 			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "not change")
 		}
@@ -184,17 +209,17 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 		dIdx, has := destMyS.ForeignAll[foreignName]
 		log.Println("trace foreignName---->[", fmt.Sprintf("%s.%s", table, foreignName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
-		alterSQL := ""
+		var alterSQLs []string
 		if has {
 			if idx.SQL != dIdx.SQL {
-				alterSQL = idx.alterAddSQL(true)
+				alterSQLs = append(alterSQLs, idx.alterAddSQL(true)...)
 			}
 		} else {
-			alterSQL = idx.alterAddSQL(false)
+			alterSQLs = append(alterSQLs, idx.alterAddSQL(false)...)
 		}
-		if alterSQL != "" {
-			alterLines = append(alterLines, alterSQL)
-			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", alterSQL)
+		if len(alterSQLs) > 0 {
+			alterLines = append(alterLines, alterSQLs...)
+			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", alterSQLs)
 		} else {
 			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
 		}
@@ -222,7 +247,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) string {
 		}
 	}
 
-	return strings.Join(alterLines, ",\n")
+	return alterLines
 }
 
 // SyncSQL4Dest sync schema change
@@ -275,7 +300,7 @@ func CheckSchemaDiff(cfg *Config) {
 	})()
 
 	sc := NewSchemaSync(cfg)
-	newTables := sc.SourceDb.GetTableNames()
+	newTables := sc.GetTableNames()
 	// log.Println("source db table total:", len(newTables))
 
 	changedTables := make(map[string][]*TableAlterData)
@@ -292,7 +317,7 @@ func CheckSchemaDiff(cfg *Config) {
 			continue
 		}
 
-		sd := sc.getAlterDataByTable(table)
+		sd := sc.getAlterDataByTable(table, cfg)
 
 		if sd.Type != alterTypeNo {
 			fmt.Println(sd)
@@ -329,11 +354,13 @@ run_sync:
 		var sqls []string
 		var sts []*tableStatics
 		for _, sd := range sds {
-			sql := strings.TrimRight(sd.SQL, ";")
-			sqls = append(sqls, sql)
+			for index := range sd.SQL {
+				sql := strings.TrimRight(sd.SQL[index], ";")
+				sqls = append(sqls, sql)
 
-			st := statics.newTableStatics(sd.Table, sd)
-			sts = append(sts, st)
+				st := statics.newTableStatics(sd.Table, sd)
+				sts = append(sts, st)
+			}
 		}
 
 		sql := strings.Join(sqls, ";\n") + ";"

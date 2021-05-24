@@ -26,7 +26,7 @@ const (
 	indexTypeForeignKey indexType = "FOREIGN KEY"
 )
 
-func (idx *DbIndex) alterAddSQL(drop bool) string {
+func (idx *DbIndex) alterAddSQL(drop bool) []string {
 	var alterSQL []string
 	if drop {
 		dropSQL := idx.alterDropSQL()
@@ -43,7 +43,7 @@ func (idx *DbIndex) alterAddSQL(drop bool) string {
 	default:
 		log.Fatalln("unknown indexType", idx.IndexType)
 	}
-	return strings.Join(alterSQL, ",\n")
+	return alterSQL
 }
 
 func (idx *DbIndex) String() string {
