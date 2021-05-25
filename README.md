@@ -15,7 +15,7 @@ mysql表结构自动同步工具
 
 
 ### 安装
->go get -u github.com/wbflooksky/mysql-schema-sync
+>go get -u github.com/hidu/mysql-schema-sync
 
 
 ### 配置
@@ -60,7 +60,7 @@ dest:   待同步的数据库
 tables： 数组，配置需要同步的表，为空则是不限制，eg: ["goods","order_*"]  
 alter_ignore： 忽略修改的配置，表名为tableName，可以配置 column 和 index，支持通配符 *  
 email ： 同步完成后发送邮件通知信息  
-
+single_schema_change：是否每个ddl只执行单个修改
 ### 运行
 ### 直接运行
 ```
