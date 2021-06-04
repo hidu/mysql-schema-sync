@@ -34,7 +34,7 @@ func (at alterType) String() string {
 type TableAlterData struct {
 	Table      string
 	Type       alterType
-	SQL        string
+	SQL        []string
 	SchemaDiff *SchemaDiff
 }
 

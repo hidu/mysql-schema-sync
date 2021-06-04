@@ -10,7 +10,8 @@ mysql表结构自动同步工具
 5.  **邮件**通知变动结果    
 6.  支持屏蔽更新**表、字段、索引、外键**  
 7.  支持本地比线上额外多一些表、字段、索引、外键
-
+8.  在该项目的基础上修复了比对过程中遇到分区表会终止后续操作的问题，支持分区表，对于分区表，会同步除了分区以外的变更。
+9.  支持每条ddl只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
 
 
 ### 安装
@@ -40,6 +41,8 @@ mysql表结构自动同步工具
       },
       //  tables: table to check schema,default is all.eg :["order_*","goods"]
       "tables":[],
+      // single_schema_change：生成的语句是否每个都是单个的修改。
+      "single_schema_change": false,
       //有变动或者失败时，邮件接收人
       "email":{
           "send_mail":false,
@@ -57,7 +60,7 @@ dest:   待同步的数据库
 tables： 数组，配置需要同步的表，为空则是不限制，eg: ["goods","order_*"]  
 alter_ignore： 忽略修改的配置，表名为tableName，可以配置 column 和 index，支持通配符 *  
 email ： 同步完成后发送邮件通知信息  
-
+single_schema_change：是否每个ddl只执行单个修改
 ### 运行
 ### 直接运行
 ```

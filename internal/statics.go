@@ -5,6 +5,7 @@ import (
 	"html"
 	"log"
 	"os"
+	"strings"
 )
 
 type statics struct {
@@ -109,7 +110,7 @@ func (s *statics) toHTML() string {
 		code += "</tr>\n"
 
 		code += "<tr>\n"
-		code += "<td valign=top><b>alter:</b><br/>" + htmlPre(tb.alter.SQL) + "</td>\n"
+		code += "<td valign=top><b>alter:</b><br/>" + htmlPre(strings.Join(tb.alter.SQL, ",")) + "</td>\n"
 		code += "<td valign=top><b>alter after:</b><br/>" + htmlPre(tb.schemaAfter) + "</td>\n"
 		code += "</tr>\n"
 	}
