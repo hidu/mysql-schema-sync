@@ -41,8 +41,6 @@ mysql表结构自动同步工具
       },
       //  tables: table to check schema,default is all.eg :["order_*","goods"]
       "tables":[],
-      // single_schema_change：生成的语句是否每个都是单个的修改。
-      "single_schema_change": false,
       //有变动或者失败时，邮件接收人
       "email":{
           "send_mail":false,
@@ -108,6 +106,8 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
   -tables string
         待检查同步的数据库表，为空则是全部
         eg : product_base,order_*
+  -single_schema_change
+        生成sql ddl语言每条命令是否只会进行单个修改操作，默认否
 
 </code>
 </pre>
