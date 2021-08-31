@@ -47,5 +47,5 @@ func (ta *TableAlterData) String() string {
 -- SQL   : 
 %s
 `
-	return fmt.Sprintf(fmtStr, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.SQL)
+	return fmt.Sprintf(fmtStr, ta.Table, ta.Type, strings.Join(relationTables, ","), strings.Join(ta.SQL, "\n"))
 }
