@@ -27,8 +27,8 @@ func NewMyDb(dsn string, dbType string) *MyDb {
 }
 
 // GetTableNames table names
-func (mydb *MyDb) GetTableNames() []string {
-	rs, err := mydb.Query("show table status")
+func (db *MyDb) GetTableNames() []string {
+	rs, err := db.Query("show table status")
 	if err != nil {
 		panic("show tables failed:" + err.Error())
 	}
@@ -65,8 +65,8 @@ func (mydb *MyDb) GetTableNames() []string {
 }
 
 // GetTableSchema table schema
-func (mydb *MyDb) GetTableSchema(name string) (schema string) {
-	rs, err := mydb.Query(fmt.Sprintf("show create table `%s`", name))
+func (db *MyDb) GetTableSchema(name string) (schema string) {
+	rs, err := db.Query(fmt.Sprintf("show create table `%s`", name))
 	if err != nil {
 		log.Println(err)
 		return
@@ -82,7 +82,7 @@ func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 }
 
 // Query execute sql query
-func (mydb *MyDb) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	log.Println("[SQL]", "["+mydb.dbType+"]", query, args)
-	return mydb.Db.Query(query, args...)
+func (db *MyDb) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	log.Println("[SQL]", "["+db.dbType+"]", query, args)
+	return db.Db.Query(query, args...)
 }

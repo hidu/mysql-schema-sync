@@ -69,12 +69,14 @@ func (sc *SchemaSync) getAlterDataByTable(table string, cfg *Config) *TableAlter
 		return alter
 	}
 	if sSchema == "" {
-		alter.Type = alterTypeDrop
+		alter.Type = alterTypeDropTable
+		alter.Comment = "源数据库不存在，删除目标数据库多余的表"
 		alter.SQL = append(alter.SQL, fmt.Sprintf("drop table `%s`;", table))
 		return alter
 	}
 	if dSchema == "" {
 		alter.Type = alterTypeCreate
+		alter.Comment = "目标数据库不存在，创建"
 		alter.SQL = append(alter.SQL, sSchema+";")
 		return alter
 	}
@@ -129,10 +131,10 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 		}
 
 		if alterSQL != "" {
-			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
+			log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
 			alterLines = append(alterLines, alterSQL)
 		} else {
-			log.Println("trace check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
+			log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
 		}
 		fieldCount++
 	}
@@ -147,9 +149,9 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			if _, has := sourceMyS.Fields.Get(name); !has {
 				alterSQL := fmt.Sprintf("drop `%s`", name)
 				alterLines = append(alterLines, alterSQL)
-				log.Println("trace check column.drop ", fmt.Sprintf("%s.%s", table, name), "alterSQL=", alterSQL)
+				log.Println("[Debug] check column.drop ", fmt.Sprintf("%s.%s", table, name), "alterSQL=", alterSQL)
 			} else {
-				log.Println("trace check column.drop ", fmt.Sprintf("%s.%s", table, name), "not change")
+				log.Println("[Debug] check column.drop ", fmt.Sprintf("%s.%s", table, name), "not change")
 			}
 		}
 	}
@@ -163,7 +165,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			continue
 		}
 		dIdx, has := destMyS.IndexAll[indexName]
-		log.Println("trace indexName---->[", fmt.Sprintf("%s.%s", table, indexName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
+		log.Println("[Debug] indexName---->[", fmt.Sprintf("%s.%s", table, indexName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
 		var alterSQLs []string
 		if has {
 			if idx.SQL != dIdx.SQL {
@@ -174,9 +176,9 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 		}
 		if len(alterSQLs) > 0 {
 			alterLines = append(alterLines, alterSQLs...)
-			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", alterSQLs)
+			log.Println("[Debug] check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", alterSQLs)
 		} else {
-			log.Println("trace check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "not change")
+			log.Println("[Debug] check index.alter ", fmt.Sprintf("%s.%s", table, indexName), "not change")
 		}
 	}
 
@@ -194,9 +196,9 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 
 			if dropSQL != "" {
 				alterLines = append(alterLines, dropSQL)
-				log.Println("trace check index.drop ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", dropSQL)
+				log.Println("[Debug] check index.drop ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", dropSQL)
 			} else {
-				log.Println("trace check index.drop ", fmt.Sprintf("%s.%s", table, indexName), " not change")
+				log.Println("[Debug] check index.drop ", fmt.Sprintf("%s.%s", table, indexName), " not change")
 			}
 		}
 	}
@@ -208,7 +210,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			continue
 		}
 		dIdx, has := destMyS.ForeignAll[foreignName]
-		log.Println("trace foreignName---->[", fmt.Sprintf("%s.%s", table, foreignName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
+		log.Println("[Debug] foreignName---->[", fmt.Sprintf("%s.%s", table, foreignName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
 		var alterSQLs []string
 		if has {
 			if idx.SQL != dIdx.SQL {
@@ -219,9 +221,9 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 		}
 		if len(alterSQLs) > 0 {
 			alterLines = append(alterLines, alterSQLs...)
-			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", alterSQLs)
+			log.Println("[Debug] check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", alterSQLs)
 		} else {
-			log.Println("trace check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
+			log.Println("[Debug] check foreignKey.alter ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
 		}
 	}
 
@@ -234,15 +236,15 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			}
 			var dropSQL string
 			if _, has := sourceMyS.ForeignAll[foreignName]; !has {
-				log.Println("trace foreignName --->[", fmt.Sprintf("%s.%s", table, foreignName), "]", "didx:", dIdx)
+				log.Println("[Debug] foreignName --->[", fmt.Sprintf("%s.%s", table, foreignName), "]", "didx:", dIdx)
 				dropSQL = dIdx.alterDropSQL()
 
 			}
 			if dropSQL != "" {
 				alterLines = append(alterLines, dropSQL)
-				log.Println("trace check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", dropSQL)
+				log.Println("[Debug] check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", dropSQL)
 			} else {
-				log.Println("trace check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
+				log.Println("[Debug] check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "not change")
 			}
 		}
 	}
@@ -293,11 +295,11 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 
 // CheckSchemaDiff 执行最终的diff
 func CheckSchemaDiff(cfg *Config) {
-	statics := newStatics(cfg)
-	defer (func() {
-		statics.timer.stop()
-		statics.sendMailNotice(cfg)
-	})()
+	scs := newStatics(cfg)
+	defer func() {
+		scs.timer.stop()
+		scs.sendMailNotice(cfg)
+	}()
 
 	sc := NewSchemaSync(cfg)
 	newTables := sc.GetTableNames()
@@ -313,33 +315,39 @@ func CheckSchemaDiff(cfg *Config) {
 		}
 
 		if cfg.CheckMatchIgnoreTables(table) {
-			log.Println("Table:", table, "skip")
+			log.Println("Table:", table, "skipped by ignore")
 			continue
 		}
 
 		sd := sc.getAlterDataByTable(table, cfg)
 
-		if sd.Type != alterTypeNo {
-			fmt.Println(sd)
-			fmt.Println("")
-			relationTables := sd.SchemaDiff.RelationTables()
-			// fmt.Println("relationTables:",table,relationTables)
-
-			// 将所有有外键关联的单独放
-			groupKey := "multi"
-			if len(relationTables) == 0 {
-				groupKey = "single_" + table
-			}
-			if _, has := changedTables[groupKey]; !has {
-				changedTables[groupKey] = make([]*TableAlterData, 0)
-			}
-			changedTables[groupKey] = append(changedTables[groupKey], sd)
-		} else {
+		if sd.Type == alterTypeNo {
 			log.Println("table:", table, "not change,", sd)
+			continue
 		}
+
+		if sd.Type == alterTypeDropTable {
+			log.Println("skipped table", table, ",only exists in dest's db")
+			continue
+		}
+
+		fmt.Println(sd)
+		fmt.Println("")
+		relationTables := sd.SchemaDiff.RelationTables()
+		// fmt.Println("relationTables:",table,relationTables)
+
+		// 将所有有外键关联的单独放
+		groupKey := "multi"
+		if len(relationTables) == 0 {
+			groupKey = "single_" + table
+		}
+		if _, has := changedTables[groupKey]; !has {
+			changedTables[groupKey] = make([]*TableAlterData, 0)
+		}
+		changedTables[groupKey] = append(changedTables[groupKey], sd)
 	}
 
-	log.Println("trace changedTables:", changedTables)
+	log.Println("[Debug] changedTables:", changedTables)
 
 	countSuccess := 0
 	countFailed := 0
@@ -358,7 +366,7 @@ run_sync:
 				sql := strings.TrimRight(sd.SQL[index], ";")
 				sqls = append(sqls, sql)
 
-				st := statics.newTableStatics(sd.Table, sd)
+				st := scs.newTableStatics(sd.Table, sd)
 				sts = append(sts, st)
 			}
 		}

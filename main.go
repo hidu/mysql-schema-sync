@@ -46,7 +46,7 @@ func main() {
 	cfg.Sync = *sync
 	cfg.Drop = *drop
 	cfg.SingleSchemaChange = *singleSchemaChange
-	
+
 	if *mailTo != "" && cfg.Email != nil {
 		cfg.Email.To = *mailTo
 	}
@@ -54,8 +54,8 @@ func main() {
 	if cfg.Tables == nil {
 		cfg.Tables = []string{}
 	}
-	if cfg.TablesIGNORE == nil {
-		cfg.TablesIGNORE = []string{}
+	if cfg.TablesIgnore == nil {
+		cfg.TablesIgnore = []string{}
 	}
 	if *tables != "" {
 		_ts := strings.Split(*tables, ",")
@@ -71,7 +71,7 @@ func main() {
 		for _, _name := range _ts {
 			_name = strings.TrimSpace(_name)
 			if _name != "" {
-				cfg.TablesIGNORE = append(cfg.TablesIGNORE, _name)
+				cfg.TablesIgnore = append(cfg.TablesIgnore, _name)
 			}
 		}
 	}

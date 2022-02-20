@@ -20,8 +20,8 @@ type Config struct {
 	// Tables 同步表的白名单，若为空，则同步全库
 	Tables []string `json:"tables"`
 
-	// TablesIGNORE 不同步的表
-	TablesIGNORE []string `json:"tables_ignore"`
+	// TablesIgnore 不同步的表
+	TablesIgnore []string `json:"tables_ignore"`
 
 	// Email 完成同步后发送同步信息的邮件账号信息
 	Email      *EmailStruct `json:"email"`
@@ -32,7 +32,7 @@ type Config struct {
 
 	// Drop 若目标数据库表比源头多了字段、索引，是否删除
 	Drop bool
-	
+
 	// SingleSchemaChange 生成sql ddl语言每条命令只会进行单个修改操作
 	SingleSchemaChange bool `json:"single_schema_change"`
 }
@@ -81,10 +81,10 @@ func (cfg *Config) CheckMatchTables(name string) bool {
 
 // CheckMatchIgnoreTables check table_Ignore is match
 func (cfg *Config) CheckMatchIgnoreTables(name string) bool {
-	if len(cfg.TablesIGNORE) == 0 {
+	if len(cfg.TablesIgnore) == 0 {
 		return false
 	}
-	for _, tableName := range cfg.TablesIGNORE {
+	for _, tableName := range cfg.TablesIgnore {
 		if simpleMatch(tableName, name, "CheckMatchTables") {
 			return true
 		}

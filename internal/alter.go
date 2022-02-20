@@ -10,7 +10,7 @@ type alterType int
 const (
 	alterTypeNo alterType = iota
 	alterTypeCreate
-	alterTypeDrop
+	alterTypeDropTable
 	alterTypeAlter
 )
 
@@ -20,7 +20,7 @@ func (at alterType) String() string {
 		return "not_change"
 	case alterTypeCreate:
 		return "create"
-	case alterTypeDrop:
+	case alterTypeDropTable:
 		return "drop"
 	case alterTypeAlter:
 		return "alter"
@@ -34,18 +34,20 @@ func (at alterType) String() string {
 type TableAlterData struct {
 	Table      string
 	Type       alterType
+	Comment    string
 	SQL        []string
 	SchemaDiff *SchemaDiff
 }
 
 func (ta *TableAlterData) String() string {
 	relationTables := ta.SchemaDiff.RelationTables()
-	fmtStr := `
+	sqlTpl := `
 -- Table : %s
 -- Type  : %s
 -- RelationTables : %s
+-- Comment: %s
 -- SQL   : 
 %s
 `
-	return fmt.Sprintf(fmtStr, ta.Table, ta.Type, strings.Join(relationTables, ","), strings.Join(ta.SQL, "\n"))
+	return fmt.Sprintf(sqlTpl, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.Comment, strings.Join(ta.SQL, "\n"))
 }

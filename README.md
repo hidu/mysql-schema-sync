@@ -1,7 +1,9 @@
 # mysql-schema-sync
-mysql表结构自动同步工具  
+MySQL Schema 自动同步工具  
 
-用于将 `线上` 数据库结构<b>变化</b>同步到 `本地环境`!  
+用于将 `线上` 数据库 Schema <b>变化</b>同步到 `本地测试环境`!   
+只同步 Schema、不同步数据。
+
 支持功能：  
 1.  同步**新表**  
 2.  同步**字段** 变动：新增、修改  
@@ -11,11 +13,13 @@ mysql表结构自动同步工具
 6.  支持屏蔽更新**表、字段、索引、外键**  
 7.  支持本地比线上额外多一些表、字段、索引、外键
 8.  在该项目的基础上修复了比对过程中遇到分区表会终止后续操作的问题，支持分区表，对于分区表，会同步除了分区以外的变更。
-9.  支持每条ddl只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
+9.  支持每条 ddl 只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
 
 
 ### 安装
->go install github.com/hidu/mysql-schema-sync@latest
+```bash
+go install github.com/hidu/mysql-schema-sync@master
+```
 
 
 ### 配置
@@ -107,7 +111,7 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
         待检查同步的数据库表，为空则是全部
         eg : product_base,order_*
   -single_schema_change
-        生成sql ddl语言每条命令是否只会进行单个修改操作，默认否
+        生成 SQL DDL 语言每条命令是否只会进行单个修改操作，默认否
 
 </code>
 </pre>
