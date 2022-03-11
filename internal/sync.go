@@ -77,21 +77,21 @@ func (sc *SchemaSync) getAlterDataByTable(table string, cfg *Config) *TableAlter
 	if dSchema == "" {
 		alter.Type = alterTypeCreate
 		alter.Comment = "目标数据库不存在，创建"
-		alter.SQL = append(alter.SQL, sSchema+";")
+		alter.SQL = append(alter.SQL, fmtTableCreateSQL(sSchema)+";")
 		return alter
 	}
 
-	diff := sc.getSchemaDiff(alter)
-	if len(diff) == 0 {
+	diffLines := sc.getSchemaDiff(alter)
+	if len(diffLines) == 0 {
 		return alter
 	}
 	alter.Type = alterTypeAlter
 	if cfg.SingleSchemaChange {
-		for _, diffSql := range diff {
-			alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, diffSql))
+		for _, line := range diffLines {
+			alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, line))
 		}
 	} else {
-		alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, strings.Join(diff, ",\n")))
+		alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, strings.Join(diffLines, ",\n")))
 	}
 
 	return alter
@@ -101,7 +101,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	sourceMyS := alter.SchemaDiff.Source
 	destMyS := alter.SchemaDiff.Dest
 	table := alter.Table
-	var beforeFieldName string = ""
+	var beforeFieldName string
 	var alterLines []string
 	var fieldCount int = 0
 	// 比对字段
@@ -165,7 +165,8 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			continue
 		}
 		dIdx, has := destMyS.IndexAll[indexName]
-		log.Println("[Debug] indexName---->[", fmt.Sprintf("%s.%s", table, indexName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
+		log.Println("[Debug] indexName---->[", fmt.Sprintf("%s.%s", table, indexName),
+			"] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
 		var alterSQLs []string
 		if has {
 			if idx.SQL != dIdx.SQL {
@@ -210,7 +211,8 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			continue
 		}
 		dIdx, has := destMyS.ForeignAll[foreignName]
-		log.Println("[Debug] foreignName---->[", fmt.Sprintf("%s.%s", table, foreignName), "] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
+		log.Println("[Debug] foreignName---->[", fmt.Sprintf("%s.%s", table, foreignName),
+			"] dest_has:", has, "\ndest_idx:", dIdx, "\nsource_idx:", idx)
 		var alterSQLs []string
 		if has {
 			if idx.SQL != dIdx.SQL {

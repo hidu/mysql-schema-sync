@@ -12,8 +12,8 @@ import (
 	"strings"
 )
 
-// Version version
-const Version = "20220220.1"
+// Version 版本号，格式：更新日期(8位).更新次数(累加)
+const Version = "20220311.2"
 
 // AppURL site
 const AppURL = "https://github.com/hidu/mysql-schema-sync/"

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -50,4 +51,10 @@ func (ta *TableAlterData) String() string {
 %s
 `
 	return fmt.Sprintf(sqlTpl, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.Comment, strings.Join(ta.SQL, "\n"))
+}
+
+var autoIncrReg = regexp.MustCompile(`\sAUTO_INCREMENT=[1-9]\d*\s`)
+
+func fmtTableCreateSQL(sql string) string {
+	return autoIncrReg.ReplaceAllString(sql, " ")
 }
