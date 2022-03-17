@@ -2,16 +2,17 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
 type alterType int
 
 const (
-	alterTypeNo     alterType = 0
-	alterTypeCreate           = 1
-	alterTypeDrop             = 2
-	alterTypeAlter            = 3
+	alterTypeNo alterType = iota
+	alterTypeCreate
+	alterTypeDropTable
+	alterTypeAlter
 )
 
 func (at alterType) String() string {
@@ -20,12 +21,12 @@ func (at alterType) String() string {
 		return "not_change"
 	case alterTypeCreate:
 		return "create"
-	case alterTypeDrop:
+	case alterTypeDropTable:
 		return "drop"
 	case alterTypeAlter:
 		return "alter"
 	default:
-		return "unknow"
+		return "unknown"
 	}
 
 }
@@ -34,18 +35,26 @@ func (at alterType) String() string {
 type TableAlterData struct {
 	Table      string
 	Type       alterType
-	SQL        string
+	Comment    string
+	SQL        []string
 	SchemaDiff *SchemaDiff
 }
 
 func (ta *TableAlterData) String() string {
 	relationTables := ta.SchemaDiff.RelationTables()
-	fmtStr := `
+	sqlTpl := `
 -- Table : %s
 -- Type  : %s
--- RealtionTables : %s
+-- RelationTables : %s
+-- Comment: %s
 -- SQL   : 
 %s
 `
-	return fmt.Sprintf(fmtStr, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.SQL)
+	return fmt.Sprintf(sqlTpl, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.Comment, strings.Join(ta.SQL, "\n"))
+}
+
+var autoIncrReg = regexp.MustCompile(`\sAUTO_INCREMENT=[1-9]\d*\s`)
+
+func fmtTableCreateSQL(sql string) string {
+	return autoIncrReg.ReplaceAllString(sql, " ")
 }

@@ -3,17 +3,17 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"html"
 	"io/ioutil"
 	"log"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-// Version version
-const Version = "0.3"
+// Version 版本号，格式：更新日期(8位).更新次数(累加)
+const Version = "20220311.2"
 
 // AppURL site
 const AppURL = "https://github.com/hidu/mysql-schema-sync/"
@@ -59,9 +59,9 @@ func simpleMatch(patternStr string, str string, msg ...string) bool {
 	if err != nil {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
 	}
-	if match {
-		//log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
-	}
+	// if match {
+	// log.Println("simple_match:suc", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str)
+	// }
 	return match
 }
 
@@ -85,5 +85,5 @@ func maxMapKeyLen(data interface{}, ext int) string {
 			l = k.Len()
 		}
 	}
-	return fmt.Sprintf("%d", l+ext)
+	return strconv.Itoa(l + ext)
 }

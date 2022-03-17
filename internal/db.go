@@ -3,9 +3,9 @@ package internal
 import (
 	"database/sql"
 	"fmt"
-	//load mysql
-	_ "github.com/go-sql-driver/mysql"
 	"log"
+
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
 // MyDb db struct
@@ -18,7 +18,7 @@ type MyDb struct {
 func NewMyDb(dsn string, dbType string) *MyDb {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(fmt.Sprintf("connect to db [%s] failed,", dsn, err))
+		panic(fmt.Sprintf("connected to db [%s] failed,err=%s", dsn, err))
 	}
 	return &MyDb{
 		Db:     db,
@@ -27,13 +27,14 @@ func NewMyDb(dsn string, dbType string) *MyDb {
 }
 
 // GetTableNames table names
-func (mydb *MyDb) GetTableNames() []string {
-	rs, err := mydb.Query("show table status")
+func (db *MyDb) GetTableNames() []string {
+	rs, err := db.Query("show table status")
 	if err != nil {
 		panic("show tables failed:" + err.Error())
 	}
 	defer rs.Close()
-	tables := []string{}
+
+	var tables []string
 	columns, _ := rs.Columns()
 	for rs.Next() {
 		var values = make([]interface{}, len(columns))
@@ -64,8 +65,8 @@ func (mydb *MyDb) GetTableNames() []string {
 }
 
 // GetTableSchema table schema
-func (mydb *MyDb) GetTableSchema(name string) (schema string) {
-	rs, err := mydb.Query(fmt.Sprintf("show create table `%s`", name))
+func (db *MyDb) GetTableSchema(name string) (schema string) {
+	rs, err := db.Query(fmt.Sprintf("show create table `%s`", name))
 	if err != nil {
 		log.Println(err)
 		return
@@ -74,14 +75,14 @@ func (mydb *MyDb) GetTableSchema(name string) (schema string) {
 	for rs.Next() {
 		var vname string
 		if err := rs.Scan(&vname, &schema); err != nil {
-			panic(fmt.Sprintf("get table %s 's schema failed,%s", name, err))
+			panic(fmt.Sprintf("get table %s 's schema failed, %s", name, err))
 		}
 	}
 	return
 }
 
 // Query execute sql query
-func (mydb *MyDb) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	log.Println("[SQL]", "["+mydb.dbType+"]", query, args)
-	return mydb.Db.Query(query, args...)
+func (db *MyDb) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	log.Println("[SQL]", "["+db.dbType+"]", query, args)
+	return db.Db.Query(query, args...)
 }

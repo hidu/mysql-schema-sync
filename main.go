@@ -11,14 +11,15 @@ import (
 )
 
 var configPath = flag.String("conf", "./config.json", "json config file path")
-var sync = flag.Bool("sync", false, "sync shcema change to dest db")
-var drop = flag.Bool("drop", false, "drop fields,index,foreign key")
+var sync = flag.Bool("sync", false, "sync schema changes to dest's db\non default, only show difference")
+var drop = flag.Bool("drop", false, "drop fields,index,foreign key only on dest's table")
 
-var source = flag.String("source", "", "mysql dsn source,eg: test@(10.10.0.1:3306)/test\n\twhen it is not empty ignore [-conf] param")
-var dest = flag.String("dest", "", "mysql dsn dest,eg test@(127.0.0.1:3306)/imis")
-var tables = flag.String("tables", "", "table names to check\n\teg : product_base,order_*")
-var tablesIGNORE = flag.String("tables_ignore", "", "table names to ignore check\n\teg : product_base,order_*")
+var source = flag.String("source", "", "sync from, eg: test@(10.10.0.1:3306)/my_online_db_name\nwhen it is not empty,[-conf] while ignore")
+var dest = flag.String("dest", "", "sync to, eg: test@(127.0.0.1:3306)/my_local_db_name")
+var tables = flag.String("tables", "", "tables to sync\neg : product_base,order_*")
+var tablesIGNORE = flag.String("tables_ignore", "", "tables ignore sync\neg : product_base,order_*")
 var mailTo = flag.String("mail_to", "", "overwrite config's email.to")
+var singleSchemaChange = flag.Bool("single_schema_change", false, "single schema changes ddl command a single schema change")
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.Ldate)
@@ -44,6 +45,7 @@ func main() {
 	}
 	cfg.Sync = *sync
 	cfg.Drop = *drop
+	cfg.SingleSchemaChange = *singleSchemaChange
 
 	if *mailTo != "" && cfg.Email != nil {
 		cfg.Email.To = *mailTo
@@ -52,8 +54,8 @@ func main() {
 	if cfg.Tables == nil {
 		cfg.Tables = []string{}
 	}
-	if cfg.TablesIGNORE == nil {
-		cfg.TablesIGNORE = []string{}
+	if cfg.TablesIgnore == nil {
+		cfg.TablesIgnore = []string{}
 	}
 	if *tables != "" {
 		_ts := strings.Split(*tables, ",")
@@ -69,7 +71,7 @@ func main() {
 		for _, _name := range _ts {
 			_name = strings.TrimSpace(_name)
 			if _name != "" {
-				cfg.TablesIGNORE = append(cfg.TablesIGNORE, _name)
+				cfg.TablesIgnore = append(cfg.TablesIgnore, _name)
 			}
 		}
 	}
