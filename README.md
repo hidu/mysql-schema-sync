@@ -32,7 +32,7 @@ go install github.com/hidu/mysql-schema-sync@master
 
 配置示例(config.json):  
 
-```json
+```
 {
       //source：同步源
       "source":"test:test@(127.0.0.1:3306)/test_0",
