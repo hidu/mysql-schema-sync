@@ -28,7 +28,7 @@ go install github.com/hidu/mysql-schema-sync@master
 参考 默认配置文件  config.json 配置同步源、目的地址。  
 修改邮件接收人  当运行失败或者有表结构变化的时候你可以收到邮件通知。  
 
-默认情况不会对多出的**表、字段、索引、外键**删除。若需要删除**字段、索引、外键** 可以使用 <code>-drop</code> 参数。
+默认情况不会对多出的**表、字段、索引、外键**删除。若需要删除**字段、索引、外键** 可以使用 `-drop` 参数。
 
 配置示例(config.json):  
 
@@ -48,6 +48,8 @@ go install github.com/hidu/mysql-schema-sync@master
       },
       //  tables: table to check schema,default is all.eg :["order_*","goods"]
       "tables":[],
+      //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
+      "tables_ignore": [],
       //有变动或者失败时，邮件接收人
       "email":{
           "send_mail":false,
