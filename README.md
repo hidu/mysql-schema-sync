@@ -1,35 +1,38 @@
 # mysql-schema-sync
+
 MySQL Schema 自动同步工具  
 
-用于将 `线上` 数据库 Schema <b>变化</b>同步到 `本地测试环境`!   
+用于将 `线上` 数据库 Schema **变化**同步到 `本地测试环境`!
 只同步 Schema、不同步数据。
 
 支持功能：  
-1.  同步**新表**  
-2.  同步**字段** 变动：新增、修改  
-3.  同步**索引** 变动：新增、修改   
-4.  支持**预览**（只对比不同步变动）  
-5.  **邮件**通知变动结果    
-6.  支持屏蔽更新**表、字段、索引、外键**  
-7.  支持本地比线上额外多一些表、字段、索引、外键
-8.  在该项目的基础上修复了比对过程中遇到分区表会终止后续操作的问题，支持分区表，对于分区表，会同步除了分区以外的变更。
-9.  支持每条 ddl 只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
 
+1. 同步**新表**  
+2. 同步**字段** 变动：新增、修改  
+3. 同步**索引** 变动：新增、修改
+4. 支持**预览**（只对比不同步变动）  
+5. **邮件**通知变动结果
+6. 支持屏蔽更新**表、字段、索引、外键**  
+7. 支持本地比线上额外多一些表、字段、索引、外键
+8. 在该项目的基础上修复了比对过程中遇到分区表会终止后续操作的问题，支持分区表，对于分区表，会同步除了分区以外的变更。
+9. 支持每条 ddl 只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
 
-### 安装
+## 安装
+
 ```bash
 go install github.com/hidu/mysql-schema-sync@master
 ```
 
+## 配置
 
-### 配置
 参考 默认配置文件  config.json 配置同步源、目的地址。  
 修改邮件接收人  当运行失败或者有表结构变化的时候你可以收到邮件通知。  
 
 默认情况不会对多出的**表、字段、索引、外键**删除。若需要删除**字段、索引、外键** 可以使用 <code>-drop</code> 参数。
 
 配置示例(config.json):  
-```
+
+```json
 {
       //source：同步源
       "source":"test:test@(127.0.0.1:3306)/test_0",
@@ -56,25 +59,32 @@ go install github.com/hidu/mysql-schema-sync@master
 }
 ```
 
-#### json配置项说明
+### json配置项说明
+
 source: 数据库同步源  
 dest:   待同步的数据库  
 tables： 数组，配置需要同步的表，为空则是不限制，eg: ["goods","order_*"]  
 alter_ignore： 忽略修改的配置，表名为tableName，可以配置 column 和 index，支持通配符 *  
 email ： 同步完成后发送邮件通知信息  
 single_schema_change：是否每个ddl只执行单个修改
+
 ### 运行
+
 ### 直接运行
-```
+
+```shell
 mysql-schema-sync -conf mydb_conf.json -sync
 ```
- 
+
 ### 预览并生成变更sql
-```
+
+```shell
 mysql-schema-sync -conf mydb_conf.json 2>/dev/null >db_alter.sql
 ```
+
 ### 使用shell调度
-```
+
+```shell
 bash check.sh
 ```
 
@@ -82,20 +92,23 @@ bash check.sh
 log存储在当前的log目录中。
 
 ### 自动定时运行
+
 添加crontab 任务
 
-<code>
-30 * * * *  cd /your/path/xxx/ && bash check.sh >/dev/null 2>&1 
-</code>
+```shell
+30 ****  cd /your/path/xxx/ && bash check.sh >/dev/null 2>&1
+```
 
 ### 参数说明
-<code>
+
+```shell
 mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
-</code>
+```
 
 说明：
-<pre><code>
-# mysql-schema-sync -help  
+
+```shell
+mysql-schema-sync -help  
   -conf string
         配置文件名称
   -dest string
@@ -112,8 +125,4 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
         eg : product_base,order_*
   -single_schema_change
         生成 SQL DDL 语言每条命令是否只会进行单个修改操作，默认否
-
-</code>
-</pre>
-
-
+```
