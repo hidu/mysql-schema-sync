@@ -17,7 +17,7 @@ var drop = flag.Bool("drop", false, "drop fields,index,foreign key only on dest'
 var source = flag.String("source", "", "sync from, eg: test@(10.10.0.1:3306)/my_online_db_name\nwhen it is not empty,[-conf] while ignore")
 var dest = flag.String("dest", "", "sync to, eg: test@(127.0.0.1:3306)/my_local_db_name")
 var tables = flag.String("tables", "", "tables to sync\neg : product_base,order_*")
-var tablesIGNORE = flag.String("tables_ignore", "", "tables ignore sync\neg : product_base,order_*")
+var tablesIgnore = flag.String("tables_ignore", "", "tables ignore sync\neg : product_base,order_*")
 var mailTo = flag.String("mail_to", "", "overwrite config's email.to")
 var singleSchemaChange = flag.Bool("single_schema_change", false, "single schema changes ddl command a single schema change")
 
@@ -28,7 +28,7 @@ func init() {
 		df()
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "mysql schema sync tools "+internal.Version)
-		fmt.Fprintln(os.Stderr, internal.AppURL+"\n")
+		fmt.Fprint(os.Stderr, internal.AppURL+"\n\n")
 	}
 }
 
@@ -66,8 +66,8 @@ func main() {
 			}
 		}
 	}
-	if *tablesIGNORE != "" {
-		_ts := strings.Split(*tablesIGNORE, ",")
+	if *tablesIgnore != "" {
+		_ts := strings.Split(*tablesIgnore, ",")
 		for _, _name := range _ts {
 			_name = strings.TrimSpace(_name)
 			if _name != "" {
