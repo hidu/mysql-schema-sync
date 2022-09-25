@@ -163,7 +163,8 @@ func (s *statics) alterFailedNum() int {
 func (s *statics) sendMailNotice(cfg *Config) {
 	alterTotal := len(s.tables)
 	if alterTotal < 1 {
-		log.Println("no table change,skip send mail")
+		writeHTMLResult("no table change")
+		log.Println("no table change, skip send mail")
 		return
 	}
 	title := "[mysql_schema_sync] " + strconv.Itoa(alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
@@ -200,17 +201,19 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	body += "</pre>\n"
 	body += s.toHTML()
 
+	writeHTMLResult(body)
+	if cfg.Email != nil {
+		cfg.Email.SendMail(title, body)
+	}
+}
+
+func writeHTMLResult(str string) {
 	fp := filepath.Join(os.TempDir(), "mysql-schema-sync_last.html")
 	if len(htmlResultPath) > 0 {
 		fp = htmlResultPath
 	}
-	err := os.WriteFile(fp, []byte(body), 0666)
-
+	err := os.WriteFile(fp, []byte(str), 0666)
 	log.Println("html result:", fp, err)
-
-	if cfg.Email != nil {
-		cfg.Email.SendMail(title, body)
-	}
 }
 
 func init() {

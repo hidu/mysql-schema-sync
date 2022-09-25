@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/smtp"
@@ -66,8 +67,15 @@ func (m *EmailStruct) SendMail(title string, body string) {
 
 	body = mailBody(body)
 
-	msgBody := fmt.Sprintf("To: %s\r\nContent-Type: text/html;charset=utf-8\r\nSubject: %s\r\n\r\n%s",
-		strings.Join(sendTo, ";"), title, body)
+	msgBody := fmt.Sprintf(
+		"To: %s\r\n"+
+			"Content-Type: text/html;charset=utf-8\r\n"+
+			"Subject: =?UTF-8?B? %s ?=\r\n"+
+			"\r\n%s",
+		strings.Join(sendTo, ";"),
+		base64.StdEncoding.EncodeToString([]byte(title)),
+		body,
+	)
 	err := smtp.SendMail(m.SMTPHost, auth, m.From, sendTo, []byte(msgBody))
 	if err == nil {
 		log.Println("send mail success")
