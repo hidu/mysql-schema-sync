@@ -13,7 +13,7 @@
      //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
      "tables_ignore":[],
      "email":{
-          "send_mail":false,
+         "send_mail":false,
          "smtp_host":"smtp.163.com:25",
          "from":"xxx@163.com",
          "password":"xxx",

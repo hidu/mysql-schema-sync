@@ -40,6 +40,20 @@ type TableAlterData struct {
 	Type       alterType
 }
 
+func (ta *TableAlterData) Split() []*TableAlterData {
+	rs := make([]*TableAlterData, len(ta.SQL))
+	for i := 0; i < len(ta.SQL); i++ {
+		rs[i] = &TableAlterData{
+			SchemaDiff: ta.SchemaDiff,
+			Table:      ta.Table,
+			Comment:    ta.Comment,
+			Type:       ta.Type,
+			SQL:        []string{ta.SQL[i]},
+		}
+	}
+	return rs
+}
+
 func (ta *TableAlterData) String() string {
 	relationTables := ta.SchemaDiff.RelationTables()
 	sqlTpl := `

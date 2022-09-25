@@ -1,0 +1,2 @@
+
+ALTER TABLE `test_1`.`user` DROP COLUMN `email`,CHANGE COLUMN `password` `password` INT NOT NULL DEFAULT 0 ,CHANGE COLUMN `status` `status` INT UNSIGNED NOT NULL DEFAULT 0 ;

@@ -264,7 +264,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 	log.Print("Exec_SQL_START:\n>>>>>>\n", sqlStr, "\n<<<<<<<<\n\n")
 	sqlStr = strings.TrimSpace(sqlStr)
-	if sqlStr == "" {
+	if len(sqlStr) == 0 {
 		log.Println("sql_is_empty, skip")
 		return nil
 	}
@@ -301,7 +301,7 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 	return err
 }
 
-// CheckSchemaDiff 执行最终的diff
+// CheckSchemaDiff 执行最终的 diff
 func CheckSchemaDiff(cfg *Config) {
 	scs := newStatics(cfg)
 	defer func() {
@@ -357,11 +357,12 @@ func CheckSchemaDiff(cfg *Config) {
 
 	log.Println("[Debug] changedTables:", changedTables)
 
-	countSuccess := 0
-	countFailed := 0
+	var countSuccess int
+	var countFailed int
 	canRunTypePref := "single"
+
 	// 先执行单个表的
-run_sync:
+runSync:
 	for typeName, sds := range changedTables {
 		if !strings.HasPrefix(typeName, canRunTypePref) {
 			continue
@@ -374,7 +375,7 @@ run_sync:
 				sql := strings.TrimRight(sd.SQL[index], ";")
 				sqls = append(sqls, sql)
 
-				st := scs.newTableStatics(sd.Table, sd)
+				st := scs.newTableStatics(sd.Table, sd, index)
 				sts = append(sts, st)
 			}
 		}
@@ -383,7 +384,6 @@ run_sync:
 		var ret error
 
 		if sc.Config.Sync {
-
 			ret = sc.SyncSQL4Dest(sql, sqls)
 			if ret == nil {
 				countSuccess++
@@ -396,13 +396,12 @@ run_sync:
 			st.schemaAfter = sc.DestDb.GetTableSchema(st.table)
 			st.timer.stop()
 		}
-
 	} // end for
 
-	// 最后再执行多个表的alter
+	// 最后再执行多个表的 alter
 	if canRunTypePref == "single" {
 		canRunTypePref = "multi"
-		goto run_sync
+		goto runSync
 	}
 
 	if sc.Config.Sync {

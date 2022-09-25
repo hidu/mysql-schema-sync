@@ -5,6 +5,7 @@ import (
 	"html"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -31,13 +32,22 @@ func newStatics(cfg *Config) *statics {
 	}
 }
 
-func (s *statics) newTableStatics(table string, sd *TableAlterData) *tableStatics {
+func (s *statics) newTableStatics(table string, sd *TableAlterData, index int) *tableStatics {
 	ts := &tableStatics{
 		timer: newMyTimer(),
 		table: table,
 		alter: sd,
 	}
-	if sd.Type != alterTypeNo {
+	if sd.Type == alterTypeNo {
+		return ts
+	}
+	if s.Config.SingleSchemaChange {
+		sds := sd.Split()
+		nts := &tableStatics{}
+		*nts = *ts
+		nts.alter = sds[index]
+		s.tables = append(s.tables, nts)
+	} else {
 		s.tables = append(s.tables, ts)
 	}
 	return ts
@@ -150,7 +160,6 @@ func (s *statics) alterFailedNum() int {
 }
 
 func (s *statics) sendMailNotice(cfg *Config) {
-
 	alterTotal := len(s.tables)
 	if alterTotal < 1 {
 		log.Println("no table change,skip send mail")
@@ -172,7 +181,7 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	body += "<h2>任务信息</h2>\n<pre>"
 	body += " 数据源：" + dsnSort(cfg.SourceDSN) + "\n"
 	body += "   目标：" + dsnSort(cfg.DestDSN) + "\n"
-	body += " 有变化：" + strconv.Itoa(len(s.tables)) + " 张表\n"
+	body += " 有变化：" + strconv.Itoa(len(s.tables)) + " 张表/条语句\n"
 	body += "<font color=green>是否同步：" + fmt.Sprintf("%t", s.Config.Sync) + "</font>\n"
 	if s.Config.Sync {
 		fn := s.alterFailedNum()
@@ -189,6 +198,11 @@ func (s *statics) sendMailNotice(cfg *Config) {
 
 	body += "</pre>\n"
 	body += s.toHTML()
+
+	fp := filepath.Join(os.TempDir(), "mysql-schema-sync_last.html")
+	err := os.WriteFile(fp, []byte(body), 0666)
+
+	log.Println("html result:", fp, err)
 
 	if cfg.Email != nil {
 		cfg.Email.SendMail(title, body)
