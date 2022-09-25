@@ -72,13 +72,13 @@ func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema
 	if sSchema == dSchema {
 		return alter
 	}
-	if sSchema == "" {
+	if len(sSchema) == 0 {
 		alter.Type = alterTypeDropTable
 		alter.Comment = "源数据库不存在，删除目标数据库多余的表"
 		alter.SQL = append(alter.SQL, fmt.Sprintf("drop table `%s`;", table))
 		return alter
 	}
-	if dSchema == "" {
+	if len(dSchema) == 0 {
 		alter.Type = alterTypeCreate
 		alter.Comment = "目标数据库不存在，创建"
 		alter.SQL = append(alter.SQL, fmtTableCreateSQL(sSchema)+";")
@@ -136,7 +136,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			beforeFieldName = el.Key.(string)
 		}
 
-		if alterSQL != "" {
+		if len(alterSQL) != 0 {
 			log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
 			alterLines = append(alterLines, alterSQL)
 		} else {
@@ -201,7 +201,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 				dropSQL = dIdx.alterDropSQL()
 			}
 
-			if dropSQL != "" {
+			if len(dropSQL) != 0 {
 				alterLines = append(alterLines, dropSQL)
 				log.Println("[Debug] check index.drop ", fmt.Sprintf("%s.%s", table, indexName), "alterSQL=", dropSQL)
 			} else {
@@ -248,7 +248,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 				dropSQL = dIdx.alterDropSQL()
 
 			}
-			if dropSQL != "" {
+			if len(dropSQL) != 0 {
 				alterLines = append(alterLines, dropSQL)
 				log.Println("[Debug] check foreignKey.drop ", fmt.Sprintf("%s.%s", table, foreignName), "alterSQL=", dropSQL)
 			} else {

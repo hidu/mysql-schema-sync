@@ -114,10 +114,10 @@ func (cfg *Config) CheckMatchIgnoreTables(name string) bool {
 
 // Check check config
 func (cfg *Config) Check() {
-	if cfg.SourceDSN == "" {
+	if len(cfg.SourceDSN) == 0 {
 		log.Fatal("source DSN is empty")
 	}
-	if cfg.DestDSN == "" {
+	if len(cfg.DestDSN) == 0 {
 		log.Fatal("dest DSN is empty")
 	}
 	// log.Println("config:\n", cfg)

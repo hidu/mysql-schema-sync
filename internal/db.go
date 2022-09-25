@@ -37,17 +37,17 @@ func (db *MyDb) GetTableNames() []string {
 	var tables []string
 	columns, _ := rs.Columns()
 	for rs.Next() {
-		var values = make([]interface{}, len(columns))
-		valuePtrs := make([]interface{}, len(columns))
+		var values = make([]any, len(columns))
+		valuePtrs := make([]any, len(columns))
 		for i := range columns {
 			valuePtrs[i] = &values[i]
 		}
 		if err := rs.Scan(valuePtrs...); err != nil {
 			panic("show tables failed when scan," + err.Error())
 		}
-		var valObj = make(map[string]interface{})
+		var valObj = make(map[string]any)
 		for i, col := range columns {
-			var v interface{}
+			var v any
 			val := values[i]
 			b, ok := val.([]byte)
 			if ok {
@@ -82,7 +82,7 @@ func (db *MyDb) GetTableSchema(name string) (schema string) {
 }
 
 // Query execute sql query
-func (db *MyDb) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (db *MyDb) Query(query string, args ...any) (*sql.Rows, error) {
 	log.Println("[SQL]", "["+db.dbType+"]", query, args)
 	return db.Db.Query(query, args...)
 }

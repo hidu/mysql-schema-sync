@@ -11,7 +11,7 @@ import (
 )
 
 // Version 版本号，格式：更新日期(8位).更新次数(累加)
-const Version = "20220311.2"
+const Version = "20220925.3"
 
 // AppURL site
 const AppURL = "https://github.com/hidu/mysql-schema-sync/"
@@ -19,7 +19,7 @@ const AppURL = "https://github.com/hidu/mysql-schema-sync/"
 const timeFormatStd string = "2006-01-02 15:04:05"
 
 // loadJsonFile load json
-func loadJSONFile(jsonPath string, val interface{}) error {
+func loadJSONFile(jsonPath string, val any) error {
 	bs, err := os.ReadFile(jsonPath)
 	if err != nil {
 		return err

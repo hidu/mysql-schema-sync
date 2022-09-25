@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"flag"
 	"fmt"
 	"html"
 	"log"
@@ -200,6 +201,9 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	body += s.toHTML()
 
 	fp := filepath.Join(os.TempDir(), "mysql-schema-sync_last.html")
+	if len(htmlResultPath) > 0 {
+		fp = htmlResultPath
+	}
 	err := os.WriteFile(fp, []byte(body), 0666)
 
 	log.Println("html result:", fp, err)
@@ -208,3 +212,9 @@ func (s *statics) sendMailNotice(cfg *Config) {
 		cfg.Email.SendMail(title, body)
 	}
 }
+
+func init() {
+	flag.StringVar(&htmlResultPath, "html", "", "html result file path")
+}
+
+var htmlResultPath string

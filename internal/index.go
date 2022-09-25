@@ -30,7 +30,7 @@ func (idx *DbIndex) alterAddSQL(drop bool) []string {
 	var alterSQL []string
 	if drop {
 		dropSQL := idx.alterDropSQL()
-		if dropSQL != "" {
+		if len(dropSQL) != 0 {
 			alterSQL = append(alterSQL, dropSQL)
 		}
 	}
@@ -67,7 +67,7 @@ func (idx *DbIndex) alterDropSQL() string {
 
 func (idx *DbIndex) addRelationTable(table string) {
 	table = strings.TrimSpace(table)
-	if table != "" {
+	if len(table) != 0 {
 		idx.RelationTables = append(idx.RelationTables, table)
 	}
 }

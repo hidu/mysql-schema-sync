@@ -40,7 +40,7 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		log.Println("send email : no")
 		return
 	}
-	if m.SMTPHost == "" || m.From == "" || m.To == "" {
+	if len(m.SMTPHost) == 0 || len(m.From) == 0 || len(m.To) == 0 {
 		log.Println("smtp_host, from,to is empty")
 		return
 	}
@@ -51,11 +51,10 @@ func (m *EmailStruct) SendMail(title string, body string) {
 	}
 	auth := smtp.PlainAuth("", m.From, m.Password, addrInfo[0])
 
-	_sendTo := strings.Split(m.To, ";")
 	var sendTo []string
-	for _, _to := range _sendTo {
+	for _, _to := range strings.Split(m.To, ";") {
 		_to = strings.TrimSpace(_to)
-		if _to != "" && strings.Contains(_to, "@") {
+		if len(_to) != 0 && strings.Contains(_to, "@") {
 			sendTo = append(sendTo, _to)
 		}
 	}

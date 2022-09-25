@@ -37,7 +37,7 @@ var cfg *internal.Config
 
 func main() {
 	flag.Parse()
-	if *source == "" {
+	if len(*source) == 0 {
 		cfg = internal.LoadConfig(*configPath)
 	} else {
 		cfg = new(internal.Config)
@@ -48,7 +48,7 @@ func main() {
 	cfg.Drop = *drop
 	cfg.SingleSchemaChange = *singleSchemaChange
 
-	if *mailTo != "" && cfg.Email != nil {
+	if len(*mailTo) != 0 && cfg.Email != nil {
 		cfg.Email.To = *mailTo
 	}
 	cfg.SetTables(strings.Split(*tables, ","))
