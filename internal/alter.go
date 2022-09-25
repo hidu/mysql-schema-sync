@@ -44,13 +44,20 @@ func (ta *TableAlterData) String() string {
 	relationTables := ta.SchemaDiff.RelationTables()
 	sqlTpl := `
 -- Table : %s
--- Type  : %s
--- RelationTables : %s
--- Comment: %s
--- SQL   : 
+-- Type : %s
+-- RelationTables :%s
+-- Comment :%s
+-- SQL :
 %s
 `
-	return fmt.Sprintf(sqlTpl, ta.Table, ta.Type, strings.Join(relationTables, ","), ta.Comment, strings.Join(ta.SQL, "\n"))
+	str := fmt.Sprintf(sqlTpl,
+		ta.Table,
+		ta.Type,
+		strings.Join(relationTables, ","),
+		strings.TrimSpace(ta.Comment),
+		strings.Join(ta.SQL, "\n"),
+	)
+	return strings.TrimSpace(str)
 }
 
 var autoIncrReg = regexp.MustCompile(`\sAUTO_INCREMENT=[1-9]\d*\s`)

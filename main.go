@@ -50,31 +50,9 @@ func main() {
 	if *mailTo != "" && cfg.Email != nil {
 		cfg.Email.To = *mailTo
 	}
+	cfg.SetTables(strings.Split(*tables, ","))
+	cfg.SetTablesIgnore(strings.Split(*tablesIgnore, ","))
 
-	if cfg.Tables == nil {
-		cfg.Tables = []string{}
-	}
-	if cfg.TablesIgnore == nil {
-		cfg.TablesIgnore = []string{}
-	}
-	if *tables != "" {
-		_ts := strings.Split(*tables, ",")
-		for _, _name := range _ts {
-			_name = strings.TrimSpace(_name)
-			if _name != "" {
-				cfg.Tables = append(cfg.Tables, _name)
-			}
-		}
-	}
-	if *tablesIgnore != "" {
-		_ts := strings.Split(*tablesIgnore, ",")
-		for _, _name := range _ts {
-			_name = strings.TrimSpace(_name)
-			if _name != "" {
-				cfg.TablesIgnore = append(cfg.TablesIgnore, _name)
-			}
-		}
-	}
 	defer (func() {
 		if err := recover(); err != nil {
 			log.Println(err)

@@ -17,22 +17,22 @@ type MySchema struct {
 }
 
 func (mys *MySchema) String() string {
+	if mys.Fields == nil {
+		return "nil"
+	}
 	var buf bytes.Buffer
 	buf.WriteString("Fields:\n")
-	fl := maxMapKeyLen(mys.Fields, 2)
 	for name, v := range mys.Fields.Keys() {
-		buf.WriteString(fmt.Sprintf("  %"+fl+"s : %s\n", name, v))
+		buf.WriteString(fmt.Sprintf(" %v : %s\n", name, v))
 	}
 
 	buf.WriteString("Index:\n")
-	fl = maxMapKeyLen(mys.IndexAll, 2)
 	for name, idx := range mys.IndexAll {
-		buf.WriteString(fmt.Sprintf("  %"+fl+"s : %s\n", name, idx.SQL))
+		buf.WriteString(fmt.Sprintf(" %s : %s\n", name, idx.SQL))
 	}
 	buf.WriteString("ForeignKey:\n")
-	fl = maxMapKeyLen(mys.ForeignAll, 2)
 	for name, idx := range mys.ForeignAll {
-		buf.WriteString(fmt.Sprintf("  %"+fl+"s : %s\n", name, idx.SQL))
+		buf.WriteString(fmt.Sprintf("  %s : %s\n", name, idx.SQL))
 	}
 	return buf.String()
 }
@@ -73,7 +73,7 @@ func ParseSchema(schema string) *MySchema {
 
 	for i := 1; i < len(lines)-1; i++ {
 		line := strings.TrimSpace(lines[i])
-		if line == "" {
+		if len(line) == 0 {
 			continue
 		}
 		line = strings.TrimRight(line, ",")
@@ -81,10 +81,6 @@ func ParseSchema(schema string) *MySchema {
 			index := strings.Index(line[1:], "`")
 			name := line[1 : index+1]
 			mys.Fields.Set(name, line)
-			// log.Println("$$$$$$$$$$$$$$$$111111 = ", name)
-			// log.Printf("%+v\n", line)
-			// log.Println("$$$$$$$$$$$$$$$$222222")
-
 		} else {
 			idx := parseDbIndexLine(line)
 			if idx == nil {
@@ -98,11 +94,7 @@ func ParseSchema(schema string) *MySchema {
 			}
 		}
 	}
-	// fmt.Println(schema)
-	// fmt.Println(mys)
-	// fmt.Println("-----")
 	return mys
-
 }
 
 type SchemaDiff struct {

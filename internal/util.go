@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"html"
-	"io/ioutil"
 	"log"
-	"reflect"
+	"os"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -22,7 +20,7 @@ const timeFormatStd string = "2006-01-02 15:04:05"
 
 // loadJsonFile load json
 func loadJSONFile(jsonPath string, val interface{}) error {
-	bs, err := ioutil.ReadFile(jsonPath)
+	bs, err := os.ReadFile(jsonPath)
 	if err != nil {
 		return err
 	}
@@ -75,15 +73,4 @@ func dsnSort(dsn string) string {
 		return dsn
 	}
 	return dsn[i+1:]
-}
-
-func maxMapKeyLen(data interface{}, ext int) string {
-	l := 0
-
-	for _, k := range reflect.ValueOf(data).MapKeys() {
-		if k.Len() > l {
-			l = k.Len()
-		}
-	}
-	return strconv.Itoa(l + ext)
 }

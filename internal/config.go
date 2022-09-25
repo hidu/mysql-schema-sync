@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 )
 
 // Config  config struct
 type Config struct {
-
 	// AlterIgnore 忽略配置， eg:   "tb1*":{"column":["aaa","a*"],"index":["aa"],"foreign":[]}
 	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
 
@@ -78,6 +78,25 @@ func (cfg *Config) CheckMatchTables(name string) bool {
 		}
 	}
 	return false
+}
+
+func (cfg *Config) SetTables(tables []string) {
+	for _, name := range tables {
+		name = strings.TrimSpace(name)
+		if len(name) > 0 {
+			cfg.Tables = append(cfg.Tables, name)
+		}
+	}
+}
+
+// SetTablesIgnore 设置忽略
+func (cfg *Config) SetTablesIgnore(tables []string) {
+	for _, name := range tables {
+		name = strings.TrimSpace(name)
+		if len(name) > 0 {
+			cfg.TablesIgnore = append(cfg.TablesIgnore, name)
+		}
+	}
 }
 
 // CheckMatchIgnoreTables check table_Ignore is match

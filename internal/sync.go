@@ -51,18 +51,22 @@ func (sc *SchemaSync) GetTableNames() []string {
 	return tables
 }
 
-// 删除表创建引擎信息，编码信息，分区信息，已修复同步表结构遇到分区表异常退出问题，对于分区表，只会同步字段，索引，主键，外键的变更
+// RemoveTableSchemaConfig 删除表创建引擎信息，编码信息，分区信息，已修复同步表结构遇到分区表异常退出问题，
+// 对于分区表，只会同步字段，索引，主键，外键的变更
 func RemoveTableSchemaConfig(schema string) string {
 	return strings.Split(schema, "ENGINE")[0]
 }
 
 func (sc *SchemaSync) getAlterDataByTable(table string, cfg *Config) *TableAlterData {
+	sSchema := sc.SourceDb.GetTableSchema(table)
+	dSchema := sc.DestDb.GetTableSchema(table)
+	return sc.getAlterDataBySchema(table, sSchema, dSchema, cfg)
+}
+
+func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema string, cfg *Config) *TableAlterData {
 	alter := new(TableAlterData)
 	alter.Table = table
 	alter.Type = alterTypeNo
-
-	sSchema := sc.SourceDb.GetTableSchema(table)
-	dSchema := sc.DestDb.GetTableSchema(table)
 	alter.SchemaDiff = newSchemaDiff(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema))
 
 	if sSchema == dSchema {
@@ -88,10 +92,12 @@ func (sc *SchemaSync) getAlterDataByTable(table string, cfg *Config) *TableAlter
 	alter.Type = alterTypeAlter
 	if cfg.SingleSchemaChange {
 		for _, line := range diffLines {
-			alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, line))
+			ns := fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, line)
+			alter.SQL = append(alter.SQL, ns)
 		}
 	} else {
-		alter.SQL = append(alter.SQL, fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, strings.Join(diffLines, ",\n")))
+		ns := fmt.Sprintf("ALTER TABLE `%s`\n%s;", table, strings.Join(diffLines, ",\n"))
+		alter.SQL = append(alter.SQL, ns)
 	}
 
 	return alter
