@@ -32,6 +32,21 @@ func Test_fmtTableCreateSQL(t *testing.T) {
 				PRIMARY KEY (id)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3`,
 		},
+		{
+			name: "del auto_incr 2",
+			args: args{
+				sql: `CREATE TABLE user (
+				id bigint unsigned NOT NULL AUTO_INCREMENT,
+				email varchar(1000) NOT NULL DEFAULT '',
+				PRIMARY KEY (id)
+			) ENGINE=InnoDB AUTO_INCREMENT=4049116 DEFAULT CHARSET=utf8mb4`,
+			},
+			want: `CREATE TABLE user (
+				id bigint unsigned NOT NULL AUTO_INCREMENT,
+				email varchar(1000) NOT NULL DEFAULT '',
+				PRIMARY KEY (id)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

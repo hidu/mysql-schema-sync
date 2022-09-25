@@ -33,11 +33,11 @@ func (at alterType) String() string {
 
 // TableAlterData 表的变更情况
 type TableAlterData struct {
+	SchemaDiff *SchemaDiff
 	Table      string
-	Type       alterType
 	Comment    string
 	SQL        []string
-	SchemaDiff *SchemaDiff
+	Type       alterType
 }
 
 func (ta *TableAlterData) String() string {

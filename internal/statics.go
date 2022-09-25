@@ -11,8 +11,8 @@ import (
 
 type statics struct {
 	timer  *myTimer
-	tables []*tableStatics
 	Config *Config
+	tables []*tableStatics
 }
 
 type tableStatics struct {

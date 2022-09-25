@@ -9,11 +9,11 @@ import (
 
 // EmailStruct email conf info
 type EmailStruct struct {
-	SendMailAble bool   `json:"send_mail"`
 	SMTPHost     string `json:"smtp_host"`
 	From         string `json:"from"`
 	Password     string `json:"password"`
 	To           string `json:"to"`
+	SendMailAble bool   `json:"send_mail"`
 }
 
 const tableStyle = `

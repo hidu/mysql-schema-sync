@@ -8,24 +8,25 @@ import (
 
 // Config  config struct
 type Config struct {
+
+	// AlterIgnore 忽略配置， eg:   "tb1*":{"column":["aaa","a*"],"index":["aa"],"foreign":[]}
+	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
+
+	// Email 完成同步后发送同步信息的邮件账号信息
+	Email *EmailStruct `json:"email"`
 	// SourceDSN 同步的源头
 	SourceDSN string `json:"source"`
 
 	// DestDSN 将被同步
 	DestDSN string `json:"dest"`
 
-	// AlterIgnore 忽略配置， eg:   "tb1*":{"column":["aaa","a*"],"index":["aa"],"foreign":[]}
-	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
+	ConfigPath string
 
 	// Tables 同步表的白名单，若为空，则同步全库
 	Tables []string `json:"tables"`
 
 	// TablesIgnore 不同步的表
 	TablesIgnore []string `json:"tables_ignore"`
-
-	// Email 完成同步后发送同步信息的邮件账号信息
-	Email      *EmailStruct `json:"email"`
-	ConfigPath string
 
 	// Sync 是否真正的执行同步操作
 	Sync bool

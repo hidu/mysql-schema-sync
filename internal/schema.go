@@ -10,10 +10,10 @@ import (
 
 // MySchema table schema
 type MySchema struct {
-	SchemaRaw  string
 	Fields     *orderedmap.OrderedMap
 	IndexAll   map[string]*DbIndex
 	ForeignAll map[string]*DbIndex
+	SchemaRaw  string
 }
 
 func (mys *MySchema) String() string {
@@ -106,9 +106,9 @@ func ParseSchema(schema string) *MySchema {
 }
 
 type SchemaDiff struct {
-	Table  string
 	Source *MySchema
 	Dest   *MySchema
+	Table  string
 }
 
 func newSchemaDiff(table, source, dest string) *SchemaDiff {
