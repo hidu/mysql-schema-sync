@@ -1,0 +1,59 @@
+project_name: mysql-schema-sync
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    id: mysql-schema-sync
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      amd64: x86_64
+
+nfpms:
+  # note that this is an array of nfpm configs
+  -
+    id: mysql-schema-sync
+    package_name: mysql-schema-sync
+    file_name_template: "{{ .ConventionalFileName }}"
+    builds:
+      - mysql-schema-sync
+    vendor: Drum Roll Inc.
+    homepage: https://example.com/
+    maintainer: Drummer <drum-roll@example.com>
+    description: |-
+      Drum rolls installer package.
+      Software to create fast and easy drum rolls.
+    formats:
+      - deb
+      - rpm
+    conflicts:
+      - svn
+      - bash
+    replaces:
+      - fish
+    bindir: /usr/bin
+    epoch: 2
+    release: 1
+    section: default
+    priority: extra
+    meta: true
+
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
