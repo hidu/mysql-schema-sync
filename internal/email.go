@@ -3,8 +3,9 @@ package internal
 import (
 	"encoding/base64"
 	"fmt"
+	"gopkg.in/gomail.v2"
 	"log"
-	"net/smtp"
+	"strconv"
 	"strings"
 )
 
@@ -50,8 +51,6 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		log.Println("smtp_host wrong, eg: host_name:25")
 		return
 	}
-	auth := smtp.PlainAuth("", m.From, m.Password, addrInfo[0])
-
 	var sendTo []string
 	for _, _to := range strings.Split(m.To, ";") {
 		_to = strings.TrimSpace(_to)
@@ -76,7 +75,16 @@ func (m *EmailStruct) SendMail(title string, body string) {
 		base64.StdEncoding.EncodeToString([]byte(title)),
 		body,
 	)
-	err := smtp.SendMail(m.SMTPHost, auth, m.From, sendTo, []byte(msgBody))
+	a := gomail.NewMessage()
+	a.SetHeader("From", m.From)
+	a.SetHeader("To", sendTo...)      //发送给多个用户
+	a.SetHeader("Subject", "表结构对比通知") //设置邮件主题
+	a.SetBody("text/html", msgBody)   //设置邮件正文
+	port, _ := strconv.Atoi(addrInfo[1])
+
+	d := gomail.NewDialer(addrInfo[0], port, m.From, m.Password)
+
+	err := d.DialAndSend(a)
 	if err == nil {
 		log.Println("send mail success")
 	} else {
