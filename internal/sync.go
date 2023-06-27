@@ -129,7 +129,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 				} else {
 					alterSQL = "ADD " + el.Value.(string)
 				}
-
 			} else {
 				alterSQL = "ADD " + el.Value.(string) + " AFTER " + beforeFieldName
 			}
@@ -246,7 +245,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 			if _, has := sourceMyS.ForeignAll[foreignName]; !has {
 				log.Println("[Debug] foreignName --->[", fmt.Sprintf("%s.%s", table, foreignName), "]", "didx:", dIdx)
 				dropSQL = dIdx.alterDropSQL()
-
 			}
 			if len(dropSQL) != 0 {
 				alterLines = append(alterLines, dropSQL)
@@ -407,5 +405,4 @@ runSync:
 	if sc.Config.Sync {
 		log.Println("execute_all_sql_done, success_total:", countSuccess, "failed_total:", countFailed)
 	}
-
 }

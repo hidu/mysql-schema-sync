@@ -3,7 +3,6 @@ package internal
 import (
 	"flag"
 	"fmt"
-	"github.com/labstack/echo"
 	"html"
 	"log"
 	"net"
@@ -11,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/labstack/echo"
 )
 
 type statics struct {
@@ -106,7 +107,6 @@ func (s *statics) toHTML() string {
 		</thead><tbody>
 		`
 	for idx, tb := range s.tables {
-
 		code += "<tr>"
 		code += "<th rowspan=2>" + strconv.Itoa(idx+1) + "</th>\n"
 		code += "<td rowspan=2>" + tb.table + "<br/><br/>"
@@ -210,7 +210,6 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	if cfg.Report {
 		startWebServer()
 	}
-
 }
 
 func startWebServer() {

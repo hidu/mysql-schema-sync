@@ -14,6 +14,7 @@ type Config struct {
 
 	// Email 完成同步后发送同步信息的邮件账号信息
 	Email *EmailStruct `json:"email"`
+
 	// SourceDSN 同步的源头
 	SourceDSN string `json:"source"`
 

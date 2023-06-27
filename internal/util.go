@@ -52,7 +52,7 @@ func simpleMatch(patternStr string, str string, msg ...string) bool {
 		log.Println("simple_match:suc,equal", msg, "patternStr:", patternStr, "str:", str)
 		return true
 	}
-	pattern := "^" + strings.Replace(patternStr, "*", `.*`, -1) + "$"
+	pattern := "^" + strings.ReplaceAll(patternStr, "*", `.*`) + "$"
 	match, err := regexp.MatchString(pattern, str)
 	if err != nil {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)

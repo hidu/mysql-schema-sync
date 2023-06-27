@@ -19,6 +19,7 @@ func newMyTimer() *myTimer {
 func (mt *myTimer) stop() {
 	mt.end = time.Now()
 }
+
 func (mt *myTimer) usedSecond() string {
 	return fmt.Sprintf("%f s", mt.end.Sub(mt.start).Seconds())
 }

@@ -3,10 +3,11 @@ package internal
 import (
 	"encoding/base64"
 	"fmt"
-	"gopkg.in/gomail.v2"
 	"log"
 	"strconv"
 	"strings"
+
+	"gopkg.in/gomail.v2"
 )
 
 // EmailStruct email conf info
@@ -77,9 +78,9 @@ func (m *EmailStruct) SendMail(title string, body string) {
 	)
 	a := gomail.NewMessage()
 	a.SetHeader("From", m.From)
-	a.SetHeader("To", sendTo...)      //发送给多个用户
-	a.SetHeader("Subject", "表结构对比通知") //设置邮件主题
-	a.SetBody("text/html", msgBody)   //设置邮件正文
+	a.SetHeader("To", sendTo...)      // 发送给多个用户
+	a.SetHeader("Subject", "表结构对比通知") // 设置邮件主题
+	a.SetBody("text/html", msgBody)   // 设置邮件正文
 	port, _ := strconv.Atoi(addrInfo[1])
 
 	d := gomail.NewDialer(addrInfo[0], port, m.From, m.Password)
