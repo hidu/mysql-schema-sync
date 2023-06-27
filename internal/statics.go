@@ -3,8 +3,10 @@ package internal
 import (
 	"flag"
 	"fmt"
+	"github.com/labstack/echo"
 	"html"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -205,6 +207,37 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	if cfg.Email != nil {
 		cfg.Email.SendMail(title, body)
 	}
+	if cfg.Report {
+		startWebServer()
+	}
+
+}
+
+func startWebServer() {
+	fp := filepath.Join(os.TempDir(), "mysql-schema-sync_last.html")
+	e := echo.New()
+	e.File("/", fp)
+	e.HideBanner = true
+	e.HidePort = true
+
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok {
+			if ipnet.IP.To4() != nil {
+				if ipnet.IP.To4()[0] == 169 || ipnet.IP.To4()[0] == 172 {
+					continue
+				}
+				log.Printf("http://%s:5960", ipnet.IP.String())
+			}
+		}
+	}
+	log.Println("Press Ctrl-C to terminate the program")
+	e.Start(":5960")
 }
 
 func writeHTMLResult(str string) {

@@ -118,6 +118,8 @@ mysql-schema-sync -help
         该项不为空时，忽略读入 -conf参数项
   -drop
         是否对本地多出的字段和索引进行删除 默认否
+  -report
+        是否启用web站点显示运行结果报告 默认否        
   -source string
         mysql 同步源,eg test@(127.0.0.1:3306)/test_0
   -sync

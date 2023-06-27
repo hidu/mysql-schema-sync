@@ -14,6 +14,7 @@ import (
 var configPath = flag.String("conf", "./config.json", "json config file path")
 var sync = flag.Bool("sync", false, "sync schema changes to dest's db\non default, only show difference")
 var drop = flag.Bool("drop", false, "drop fields,index,foreign key only on dest's table")
+var report = flag.Bool("report", false, "enable the web site to display execution reports")
 
 var source = flag.String("source", "", "sync from, eg: test@(10.10.0.1:3306)/my_online_db_name\nwhen it is not empty,[-conf] while ignore")
 var dest = flag.String("dest", "", "sync to, eg: test@(127.0.0.1:3306)/my_local_db_name")
@@ -46,6 +47,7 @@ func main() {
 	}
 	cfg.Sync = *sync
 	cfg.Drop = *drop
+	cfg.Report = *report
 	cfg.SingleSchemaChange = *singleSchemaChange
 
 	if len(*mailTo) != 0 && cfg.Email != nil {
