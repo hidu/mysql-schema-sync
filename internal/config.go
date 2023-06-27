@@ -35,8 +35,8 @@ type Config struct {
 	// Drop 若目标数据库表比源头多了字段、索引，是否删除
 	Drop bool
 
-	// Report 是否生成站点报告
-	Report bool
+	// HTTPAddress 生成站点报告的地址，如 :8080
+	HTTPAddress string
 
 	// SingleSchemaChange 生成sql ddl语言每条命令只会进行单个修改操作
 	SingleSchemaChange bool `json:"single_schema_change"`
