@@ -210,7 +210,17 @@ func (s *statics) sendMailNotice(cfg *Config) {
 	}
 }
 
+func formatAddress(address *string) {
+	if !strings.Contains(*address, ":") {
+		*address = *address + ":8080"
+	}
+	if strings.HasPrefix(*address, ":") {
+		*address = "127.0.0.1" + *address
+	}
+}
+
 func startWebServer(addr string) {
+	formatAddress(&addr)
 	fp := filepath.Join(os.TempDir(), "mysql-schema-sync_last.html")
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		bf, err := os.ReadFile(fp)
