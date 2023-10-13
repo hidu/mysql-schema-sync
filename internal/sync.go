@@ -130,7 +130,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 					alterSQL = "ADD " + el.Value.(string)
 				}
 			} else {
-				alterSQL = "ADD " + el.Value.(string) + " AFTER " + beforeFieldName
+        alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", el.Value.(string), beforeFieldName)
 			}
 			beforeFieldName = el.Key.(string)
 		}
