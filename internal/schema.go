@@ -76,12 +76,20 @@ func ParseSchema(schema string) *MySchema {
 		if len(line) == 0 {
 			continue
 		}
+
 		line = strings.TrimRight(line, ",")
-		if line[0] == '`' {
+		switch line[0] {
+		case '`':
 			index := strings.Index(line[1:], "`")
 			name := line[1 : index+1]
 			mys.Fields.Set(name, line)
-		} else {
+
+		case '"':
+			index := strings.Index(line[1:], "\"")
+			name := line[1 : index+1]
+			mys.Fields.Set(name, line)
+
+		default:
 			idx := parseDbIndexLine(line)
 			if idx == nil {
 				continue

@@ -54,6 +54,31 @@ func TestParseSchema(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "case 2",
+			args: args{
+				schema: testLoadFile("testdata/user_4.sql"),
+			},
+			want: &MySchema{
+				Fields: (func() *orderedmap.OrderedMap {
+					m := orderedmap.NewOrderedMap()
+					// 不会检查 value
+					m.Set("id", "\"id\" bigint unsigned NOT NULL AUTO_INCREMENT,")
+					m.Set("email", "\"email\" varchar(1000) NOT NULL DEFAULT \"\",")
+					m.Set("register_time", "\"register_time\" timestamp NOT NULL,")
+					m.Set("password", "\"password\" varchar(1000) NOT NULL DEFAULT \"\",")
+					m.Set("status", "\"status\" tinyint unsigned NOT NULL DEFAULT \"0\",")
+					return m
+				})(),
+				IndexAll: map[string]*DbIndex{
+					"PRIMARY KEY": {
+						Name:      "PRIMARY KEY",
+						SQL:       "PRIMARY KEY (\"id\")",
+						IndexType: indexTypePrimary,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
