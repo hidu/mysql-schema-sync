@@ -24,3 +24,7 @@ _testmain.go
 *.prof
 log/
 .idea/
+mysql-schema-sync
+vendor
+mydb_conf.json
+db_alter.sql

@@ -11,7 +11,7 @@ import (
 	"github.com/hidu/mysql-schema-sync/internal"
 )
 
-var configPath = flag.String("conf", "./config.json", "json config file path")
+var configPath = flag.String("conf", "./mydb_conf.json", "json config file path")
 var sync = flag.Bool("sync", false, "sync schema changes to dest's db\non default, only show difference")
 var drop = flag.Bool("drop", false, "drop fields,index,foreign key only on dest's table")
 var httpAddress = flag.String("http", "", "HTTP service address, eg. :8080")
