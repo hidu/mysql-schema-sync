@@ -269,6 +269,16 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 	t := newMyTimer()
 	ret, err := sc.DestDb.Query(sqlStr)
 
+	defer func() {
+		if ret != nil {
+			err := ret.Close()
+			if err != nil {
+				log.Println("close ret error:", err)
+				return
+			}
+		}
+	}()
+
 	// how to enable allowMultiQueries?
 	if err != nil && len(sqls) > 1 {
 		log.Println("exec_mut_query failed, err=", err, ",now exec SQLs foreach")
