@@ -33,6 +33,10 @@ go install github.com/hidu/mysql-schema-sync@master
 配置示例(config.json):  
 
 ```
+cp config.json mydb_conf.json
+```
+
+```
 {
       //source：同步源
       "source":"test:test@(127.0.0.1:3306)/test_0",
@@ -75,13 +79,14 @@ single_schema_change：是否每个ddl只执行单个修改
 ### 直接运行
 
 ```shell
-mysql-schema-sync -conf mydb_conf.json -sync
+./mysql-schema-sync -conf mydb_conf.json -sync
 ```
 
 ### 预览并生成变更sql
 
 ```shell
-mysql-schema-sync -conf mydb_conf.json 2>/dev/null >db_alter.sql
+./mysql-schema-sync -drop -conf mydb_conf.json 2>/dev/null >db_alter.sql
+
 ```
 
 ### 使用shell调度
