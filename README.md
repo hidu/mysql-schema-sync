@@ -103,7 +103,7 @@ log存储在当前的log目录中。
 添加crontab 任务
 
 ```shell
-30 ****  cd /your/path/xxx/ && bash check.sh >/dev/null 2>&1
+30 * * * *  cd /your/path/xxx/ && bash check.sh >/dev/null 2>&1
 ```
 
 ### 参数说明
