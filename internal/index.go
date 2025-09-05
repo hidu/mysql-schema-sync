@@ -24,6 +24,7 @@ const (
 	indexTypePrimary    indexType = "PRIMARY"
 	indexTypeIndex      indexType = "INDEX"
 	indexTypeForeignKey indexType = "FOREIGN KEY"
+	checkConstraint     indexType = "CHECK"
 )
 
 func (idx *DbIndex) alterAddSQL(drop bool) []string {
@@ -39,6 +40,8 @@ func (idx *DbIndex) alterAddSQL(drop bool) []string {
 	case indexTypePrimary:
 		alterSQL = append(alterSQL, "ADD "+idx.SQL)
 	case indexTypeIndex, indexTypeForeignKey:
+		alterSQL = append(alterSQL, fmt.Sprintf("ADD %s", idx.SQL))
+	case checkConstraint:
 		alterSQL = append(alterSQL, fmt.Sprintf("ADD %s", idx.SQL))
 	default:
 		log.Fatalln("unknown indexType", idx.IndexType)
@@ -59,6 +62,8 @@ func (idx *DbIndex) alterDropSQL() string {
 		return fmt.Sprintf("DROP INDEX `%s`", idx.Name)
 	case indexTypeForeignKey:
 		return fmt.Sprintf("DROP FOREIGN KEY `%s`", idx.Name)
+	case checkConstraint:
+		return fmt.Sprintf("DROP CHECK `%s`", idx.Name)
 	default:
 		log.Fatalln("unknown indexType", idx.IndexType)
 	}
@@ -77,6 +82,9 @@ var indexReg = regexp.MustCompile(`^([A-Z]+\s)?KEY\s`)
 
 // 匹配外键
 var foreignKeyReg = regexp.MustCompile("^CONSTRAINT `(.+)` FOREIGN KEY.+ REFERENCES `(.+)` ")
+
+// Check约束
+var checkConstraintReg = regexp.MustCompile("^CONSTRAINT `([^`]+)` CHECK \\(\\((.+)\\)\\)")
 
 func parseDbIndexLine(line string) *DbIndex {
 	line = strings.TrimSpace(line)
@@ -107,6 +115,14 @@ func parseDbIndexLine(line string) *DbIndex {
 		idx.IndexType = indexTypeForeignKey
 		idx.Name = foreignMatches[1]
 		idx.addRelationTable(foreignMatches[2])
+		return idx
+	}
+
+	//CONSTRAINT `chk_xx_1` CHECK ((`x` >= 0 and `y` <= 100))
+	checkMatches := checkConstraintReg.FindStringSubmatch(line)
+	if len(checkMatches) > 0 {
+		idx.IndexType = checkConstraint
+		idx.Name = checkMatches[1]
 		return idx
 	}
 
