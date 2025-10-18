@@ -10,10 +10,11 @@ import (
 
 // MySchema table schema
 type MySchema struct {
-	Fields     *orderedmap.OrderedMap
-	IndexAll   map[string]*DbIndex
-	ForeignAll map[string]*DbIndex
-	SchemaRaw  string
+	Fields         *orderedmap.OrderedMap           // Legacy: field name -> field definition string
+	FieldInfos     map[string]*FieldInfo            // New: structured field information
+	IndexAll       map[string]*DbIndex
+	ForeignAll     map[string]*DbIndex
+	SchemaRaw      string
 }
 
 func (mys *MySchema) String() string {
@@ -24,6 +25,14 @@ func (mys *MySchema) String() string {
 	buf.WriteString("Fields:\n")
 	for name, v := range mys.Fields.Keys() {
 		buf.WriteString(fmt.Sprintf(" %v : %s\n", name, v))
+	}
+
+	if len(mys.FieldInfos) > 0 {
+		buf.WriteString("FieldInfos:\n")
+		for name, info := range mys.FieldInfos {
+			buf.WriteString(fmt.Sprintf(" %s : %s (charset: %v, collation: %v)\n",
+				name, info.String(), info.CharsetName, info.CollationName))
+		}
 	}
 
 	buf.WriteString("Index:\n")
@@ -67,6 +76,7 @@ func ParseSchema(schema string) *MySchema {
 	mys := &MySchema{
 		SchemaRaw:  schema,
 		Fields:     orderedmap.NewOrderedMap(),
+		FieldInfos: make(map[string]*FieldInfo),
 		IndexAll:   make(map[string]*DbIndex),
 		ForeignAll: make(map[string]*DbIndex),
 	}
@@ -116,6 +126,24 @@ func newSchemaDiff(table, source, dest string) *SchemaDiff {
 		Table:  table,
 		Source: ParseSchema(source),
 		Dest:   ParseSchema(dest),
+	}
+}
+
+// NewSchemaWithFieldInfos creates a MySchema with structured field information
+func NewSchemaWithFieldInfos(schema string, fieldInfos map[string]*FieldInfo) *MySchema {
+	mys := ParseSchema(schema)
+	if mys != nil {
+		mys.FieldInfos = fieldInfos
+	}
+	return mys
+}
+
+// NewSchemaDiffWithFieldInfos creates a SchemaDiff with structured field information
+func NewSchemaDiffWithFieldInfos(table, sourceSchema, destSchema string, sourceFields, destFields map[string]*FieldInfo) *SchemaDiff {
+	return &SchemaDiff{
+		Table:  table,
+		Source: NewSchemaWithFieldInfos(sourceSchema, sourceFields),
+		Dest:   NewSchemaWithFieldInfos(destSchema, destFields),
 	}
 }
 
