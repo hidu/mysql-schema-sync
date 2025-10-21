@@ -2,11 +2,12 @@ package internal
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
@@ -141,22 +142,46 @@ func (f *FieldInfo) collationEquals(other *FieldInfo) bool {
 	return *f.CollationName == *other.CollationName
 }
 
+type dbType string
+
+const (
+	dbTypeSource = "source"
+	dbTypeDest   = "dest"
+)
+
 // MyDb db struct
 type MyDb struct {
-	Db     *sql.DB
-	dbType string
+	sqlDB  *sql.DB
+	dbType dbType
+	dbName string // 数据库名称
 }
 
 // NewMyDb parse dsn
-func NewMyDb(dsn string, dbType string) *MyDb {
+func NewMyDb(dsn string, dbType dbType) *MyDb {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(fmt.Sprintf("connected to db [%s] failed,err=%s", dsn, err))
 	}
-	return &MyDb{
-		Db:     db,
-		dbType: dbType,
+	dbName, err := getDatabaseName(db)
+	if err != nil {
+		panic(fmt.Sprintf("get database name failed,err=%s", err))
 	}
+	return &MyDb{
+		sqlDB:  db,
+		dbType: dbType,
+		dbName: dbName,
+	}
+}
+
+// getDatabaseName extracts database name from the current database connection
+func getDatabaseName(db *sql.DB) (string, error) {
+	var dbName string
+	const query = "SELECT DATABASE()"
+	err := db.QueryRow(query).Scan(&dbName)
+	if err != nil {
+		log.Printf("QueryRow %q, Result=%q, Err=%v", query, dbName, err)
+	}
+	return dbName, err
 }
 
 // GetTableNames table names
@@ -201,7 +226,6 @@ func (db *MyDb) GetTableNames() []string {
 func (db *MyDb) GetTableSchema(name string) (schema string) {
 	rs, err := db.Query(fmt.Sprintf("show create table `%s`", name))
 	if err != nil {
-		log.Println(err)
 		return
 	}
 	defer rs.Close()
@@ -214,20 +238,9 @@ func (db *MyDb) GetTableSchema(name string) (schema string) {
 	return
 }
 
-// GetTableFieldsFromInformationSchema retrieves detailed field information from INFORMATION_SCHEMA.COLUMNS
-func (db *MyDb) GetTableFieldsFromInformationSchema(tableName string) (map[string]*FieldInfo, error) {
-	// Check if database connection is available
-	if db == nil || db.Db == nil {
-		return nil, errors.New("database connection is nil")
-	}
-
-	// Extract database name from DSN or use current database
-	dbName := db.getDatabaseName()
-	if dbName == "" {
-		return nil, errors.New("could not determine database name from DSN")
-	}
-
-	query := `
+// TableFieldsFromInformationSchema retrieves detailed field information from INFORMATION_SCHEMA.COLUMNS
+func (db *MyDb) TableFieldsFromInformationSchema(tableName string) (map[string]*FieldInfo, error) {
+	const query = `
 		SELECT
 			COLUMN_NAME,
 			ORDINAL_POSITION,
@@ -245,11 +258,9 @@ func (db *MyDb) GetTableFieldsFromInformationSchema(tableName string) (map[strin
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
 		ORDER BY ORDINAL_POSITION`
 
-	log.Println("[SQL]", "["+db.dbType+"]", query, "args:", dbName, tableName)
-
-	rows, err := db.Query(query, dbName, tableName)
+	rows, err := db.Query(query, db.dbName, tableName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query INFORMATION_SCHEMA.COLUMNS for table %s: %v", tableName, err)
+		return nil, fmt.Errorf("failed to query INFORMATION_SCHEMA.COLUMNS for table %q: %v", tableName, err)
 	}
 	defer rows.Close()
 
@@ -275,7 +286,7 @@ func (db *MyDb) GetTableFieldsFromInformationSchema(tableName string) (map[strin
 			&field.Extra,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan field information for table %s: %v", tableName, err)
+			return nil, fmt.Errorf("failed to scan field information for table %q: %v", tableName, err)
 		}
 
 		// Handle nullable fields
@@ -305,33 +316,30 @@ func (db *MyDb) GetTableFieldsFromInformationSchema(tableName string) (map[strin
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating field information for table %s: %v", tableName, err)
+		return nil, fmt.Errorf("error iterating field information for table %q: %v", tableName, err)
 	}
 
 	if len(fields) == 0 {
-		return nil, fmt.Errorf("no fields found for table %s in database %s", tableName, dbName)
+		return nil, fmt.Errorf("no fields found for table %q in database %q", tableName, db.dbName)
 	}
 
 	return fields, nil
 }
 
-// getDatabaseName extracts database name from the current database connection
-func (db *MyDb) getDatabaseName() string {
-	if db == nil || db.Db == nil {
-		log.Print("database connection is nil")
-		return ""
-	}
-	var dbName string
-	err := db.Db.QueryRow("SELECT DATABASE()").Scan(&dbName)
-	if err != nil {
-		log.Printf("failed to get current database name: %v", err)
-		return ""
-	}
-	return dbName
-}
-
 // Query execute sql query
-func (db *MyDb) Query(query string, args ...any) (*sql.Rows, error) {
-	log.Println("[SQL]", "["+db.dbType+"]", query, args)
-	return db.Db.Query(query, args...)
+func (db *MyDb) Query(query string, args ...any) (rows *sql.Rows, err error) {
+	txt := fmt.Sprintf("[%-6s: %s] [Query] Start SQL=%s Args=%s\n",
+		db.dbType,
+		db.dbName,
+		color.GreenString("%s", strings.TrimSpace(query)),
+		color.GreenString("%v", args),
+	)
+	log.Output(2, txt)
+	start := time.Now()
+	defer func() {
+		cost := time.Since(start)
+		txt = fmt.Sprintf("[%-6s: %s] [Query] End   Cost=%s Err=%s\n", db.dbType, db.dbName, cost.String(), errString(err))
+		log.Output(3, txt)
+	}()
+	return db.sqlDB.Query(query, args...)
 }

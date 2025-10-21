@@ -67,5 +67,5 @@ func main() {
 	})()
 
 	cfg.Check()
-	internal.CheckSchemaDiff(cfg)
+	internal.Execute(cfg)
 }

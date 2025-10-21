@@ -3,7 +3,10 @@ package internal
 import (
 	"fmt"
 	"log"
+	"slices"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 // SchemaSync 配置文件
@@ -17,8 +20,8 @@ type SchemaSync struct {
 func NewSchemaSync(config *Config) *SchemaSync {
 	s := new(SchemaSync)
 	s.Config = config
-	s.SourceDb = NewMyDb(config.SourceDSN, "source")
-	s.DestDb = NewMyDb(config.DestDSN, "dest")
+	s.SourceDb = NewMyDb(config.SourceDSN, dbTypeSource)
+	s.DestDb = NewMyDb(config.DestDSN, dbTypeDest)
 	return s
 }
 
@@ -37,12 +40,11 @@ func (sc *SchemaSync) GetNewTableNames() []string {
 	return newTables
 }
 
-// 合并源数据库和目标数据库的表名
-func (sc *SchemaSync) GetTableNames() []string {
+// AllDBTables 合并源数据库和目标数据库的表名
+func (sc *SchemaSync) AllDBTables() []string {
 	sourceTables := sc.SourceDb.GetTableNames()
 	destTables := sc.DestDb.GetTableNames()
-	var tables []string
-	tables = append(tables, destTables...)
+	tables := slices.Clone(destTables)
 	for _, name := range sourceTables {
 		if !inStringSlice(name, tables) {
 			tables = append(tables, name)
@@ -69,22 +71,22 @@ func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema
 	alter.Type = alterTypeNo
 
 	// Try to get structured field information from INFORMATION_SCHEMA.COLUMNS
-	sourceFields, sourceFieldsErr := sc.SourceDb.GetTableFieldsFromInformationSchema(table)
-	destFields, destFieldsErr := sc.DestDb.GetTableFieldsFromInformationSchema(table)
+	sourceFields, sourceFieldsErr := sc.SourceDb.TableFieldsFromInformationSchema(table)
+	destFields, destFieldsErr := sc.DestDb.TableFieldsFromInformationSchema(table)
 
 	// If we can get structured field information from both databases, use it for precise comparison
 	if sourceFieldsErr == nil && destFieldsErr == nil {
-		log.Printf("[Debug] Using structured field comparison for table %s", table)
+		log.Printf("[Debug] Using structured field comparison for table %q", table)
 		alter.SchemaDiff = NewSchemaDiffWithFieldInfos(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema), sourceFields, destFields)
 	} else {
 		// Fallback to legacy text-based comparison
 		if sourceFieldsErr != nil {
-			log.Printf("[Debug] Failed to get source fields for table %s: %v", table, sourceFieldsErr)
+			log.Printf("[Debug] Failed to get source fields for table %q: %s", table, errString(sourceFieldsErr))
 		}
 		if destFieldsErr != nil {
-			log.Printf("[Debug] Failed to get dest fields for table %s: %v", table, destFieldsErr)
+			log.Printf("[Debug] Failed to get dest fields for table %q: %s", table, errString(destFieldsErr))
 		}
-		log.Printf("[Debug] Using legacy text-based comparison for table %s", table)
+		log.Printf("[Debug] Using legacy text-based comparison for table %q", table)
 		alter.SchemaDiff = newSchemaDiff(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema))
 	}
 
@@ -357,8 +359,8 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 
 // SyncSQL4Dest sync schema change
 func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
-	log.Print("Exec_SQL_START:\n>>>>>>\n", sqlStr, "\n<<<<<<<<\n\n")
 	sqlStr = strings.TrimSpace(sqlStr)
+	log.Print("Exec_SQL:\n>>>>>>\n", color.GreenString(sqlStr), "\n<<<<<<<<\n\n")
 	if len(sqlStr) == 0 {
 		log.Println("sql_is_empty, skip")
 		return nil
@@ -370,7 +372,7 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 		if ret != nil {
 			err := ret.Close()
 			if err != nil {
-				log.Println("close ret error:", err)
+				log.Println("close ret error:", errString(err))
 				return
 			}
 		}
@@ -378,138 +380,32 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 
 	// how to enable allowMultiQueries?
 	if err != nil && len(sqls) > 1 {
-		log.Println("exec_mut_query failed, err=", err, ",now exec SQLs foreach")
-		tx, errTx := sc.DestDb.Db.Begin()
-		if errTx == nil {
-			for _, sql := range sqls {
-				ret, err = tx.Query(sql)
-				log.Println("query_one:[", sql, "]", err)
-				if err != nil {
-					break
-				}
+		log.Println("Exec_mut_query failed, err=", errString(err), ", now try exec SQLs foreach")
+		tx, errTx := sc.DestDb.sqlDB.Begin()
+		if errTx != nil {
+			log.Println("db.Begin failed", errString(err))
+			return errTx
+		}
+		for _, sql := range sqls {
+			ret, err = tx.Query(sql)
+			log.Println("query_one:[", sql, "]", errString(err))
+			if err != nil {
+				break
 			}
-			if err == nil {
-				err = tx.Commit()
-			} else {
-				_ = tx.Rollback()
-			}
+		}
+		if err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
 		}
 	}
 	t.stop()
 	if err != nil {
-		log.Println("EXEC_SQL_FAILED:", err)
+		log.Println("EXEC_SQL_FAILED:", errString(err))
 		return err
 	}
 	log.Println("EXEC_SQL_SUCCESS, used:", t.usedSecond())
 	cl, err := ret.Columns()
 	log.Println("EXEC_SQL_RET:", cl, err)
 	return err
-}
-
-// CheckSchemaDiff 执行最终的 diff
-func CheckSchemaDiff(cfg *Config) {
-	scs := newStatics(cfg)
-	defer func() {
-		scs.timer.stop()
-		scs.sendMailNotice(cfg)
-	}()
-
-	sc := NewSchemaSync(cfg)
-	newTables := sc.GetTableNames()
-	// log.Println("source db table total:", len(newTables))
-
-	changedTables := make(map[string][]*TableAlterData)
-
-	for _, table := range newTables {
-		// log.Printf("Index : %d Table : %s\n", index, table)
-		if !cfg.CheckMatchTables(table) {
-			// log.Println("Table:", table, "skip")
-			continue
-		}
-
-		if cfg.CheckMatchIgnoreTables(table) {
-			log.Println("Table:", table, "skipped by ignore")
-			continue
-		}
-
-		sd := sc.getAlterDataByTable(table, cfg)
-
-		if sd.Type == alterTypeNo {
-			log.Println("table:", table, "not change,", sd)
-			continue
-		}
-
-		if sd.Type == alterTypeDropTable {
-			log.Println("skipped table", table, ",only exists in dest's db")
-			continue
-		}
-
-		fmt.Println(sd)
-		fmt.Println("")
-		relationTables := sd.SchemaDiff.RelationTables()
-		// fmt.Println("relationTables:",table,relationTables)
-
-		// 将所有有外键关联的单独放
-		groupKey := "multi"
-		if len(relationTables) == 0 {
-			groupKey = "single_" + table
-		}
-		if _, has := changedTables[groupKey]; !has {
-			changedTables[groupKey] = make([]*TableAlterData, 0)
-		}
-		changedTables[groupKey] = append(changedTables[groupKey], sd)
-	}
-
-	log.Println("[Debug] changedTables:", changedTables)
-
-	var countSuccess int
-	var countFailed int
-	canRunTypePref := "single"
-
-	// 先执行单个表的
-runSync:
-	for typeName, sds := range changedTables {
-		if !strings.HasPrefix(typeName, canRunTypePref) {
-			continue
-		}
-		log.Println("runSyncType:", typeName)
-		var sqls []string
-		var sts []*tableStatics
-		for _, sd := range sds {
-			for index := range sd.SQL {
-				sql := strings.TrimRight(sd.SQL[index], ";")
-				sqls = append(sqls, sql)
-
-				st := scs.newTableStatics(sd.Table, sd, index)
-				sts = append(sts, st)
-			}
-		}
-
-		sql := strings.Join(sqls, ";\n") + ";"
-		var ret error
-
-		if sc.Config.Sync {
-			ret = sc.SyncSQL4Dest(sql, sqls)
-			if ret == nil {
-				countSuccess++
-			} else {
-				countFailed++
-			}
-		}
-		for _, st := range sts {
-			st.alterRet = ret
-			st.schemaAfter = sc.DestDb.GetTableSchema(st.table)
-			st.timer.stop()
-		}
-	} // end for
-
-	// 最后再执行多个表的 alter
-	if canRunTypePref == "single" {
-		canRunTypePref = "multi"
-		goto runSync
-	}
-
-	if sc.Config.Sync {
-		log.Println("execute_all_sql_done, success_total:", countSuccess, "failed_total:", countFailed)
-	}
 }

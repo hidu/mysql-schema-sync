@@ -124,7 +124,6 @@ func (cfg *Config) Check() {
 	if len(cfg.DestDSN) == 0 {
 		log.Fatal("dest DSN is empty")
 	}
-	// log.Println("config:\n", cfg)
 }
 
 // IsIgnoreIndex is index ignore

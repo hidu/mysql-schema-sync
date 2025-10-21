@@ -167,7 +167,7 @@ func (s *statics) sendMailNotice(cfg *Config) {
 		log.Println("no table change, skip send mail")
 		return
 	}
-	title := "[mysql_schema_sync] " + strconv.Itoa(alterTotal) + " tables change [" + dsnShort(cfg.DestDSN) + "]"
+	title := "[mysql_schema_sync][" + dsnShort(cfg.DestDSN) + "]" + strconv.Itoa(alterTotal) + "张表发生变化"
 	body := `
 <style>
 .tb_1,.tb_1 td,.tb_1 th{border: 1px solid;border-collapse: collapse;}
@@ -189,7 +189,7 @@ func (s *statics) sendMailNotice(cfg *Config) {
 		fn := s.alterFailedNum()
 		body += "<font color=red>失败数 : " + strconv.Itoa(fn) + "</font>\n"
 		if fn > 0 {
-			title += " [failed=" + strconv.Itoa(fn) + "]"
+			title += " [失败-" + strconv.Itoa(fn) + "]"
 		}
 	}
 	body += "\n"
