@@ -67,7 +67,26 @@ func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema
 	alter := new(TableAlterData)
 	alter.Table = table
 	alter.Type = alterTypeNo
-	alter.SchemaDiff = newSchemaDiff(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema))
+
+	// Try to get structured field information from INFORMATION_SCHEMA.COLUMNS
+	sourceFields, sourceFieldsErr := sc.SourceDb.GetTableFieldsFromInformationSchema(table)
+	destFields, destFieldsErr := sc.DestDb.GetTableFieldsFromInformationSchema(table)
+
+	// If we can get structured field information from both databases, use it for precise comparison
+	if sourceFieldsErr == nil && destFieldsErr == nil {
+		log.Printf("[Debug] Using structured field comparison for table %s", table)
+		alter.SchemaDiff = NewSchemaDiffWithFieldInfos(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema), sourceFields, destFields)
+	} else {
+		// Fallback to legacy text-based comparison
+		if sourceFieldsErr != nil {
+			log.Printf("[Debug] Failed to get source fields for table %s: %v", table, sourceFieldsErr)
+		}
+		if destFieldsErr != nil {
+			log.Printf("[Debug] Failed to get dest fields for table %s: %v", table, destFieldsErr)
+		}
+		log.Printf("[Debug] Using legacy text-based comparison for table %s", table)
+		alter.SchemaDiff = newSchemaDiff(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema))
+	}
 
 	if sSchema == dSchema {
 		return alter
@@ -110,38 +129,116 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	var beforeFieldName string
 	var alterLines []string
 	var fieldCount int = 0
-	// 比对字段
-	for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
-		if sc.Config.IsIgnoreField(table, el.Key.(string)) {
-			log.Printf("ignore column %s.%s", table, el.Key.(string))
-			continue
-		}
-		var alterSQL string
-		if destDt, has := destMyS.Fields.Get(el.Key); has {
-			if el.Value != destDt {
-				alterSQL = fmt.Sprintf("CHANGE `%s` %s", el.Key, el.Value)
-			}
-			beforeFieldName = el.Key.(string)
-		} else {
-			if len(beforeFieldName) == 0 {
-				if fieldCount == 0 {
-					alterSQL = "ADD " + el.Value.(string) + " FIRST"
-				} else {
-					alterSQL = "ADD " + el.Value.(string)
-				}
-			} else {
-        alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", el.Value.(string), beforeFieldName)
-			}
-			beforeFieldName = el.Key.(string)
-		}
 
-		if len(alterSQL) != 0 {
-			log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
-			alterLines = append(alterLines, alterSQL)
-		} else {
-			log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
+	// 比对字段 - Two-phase comparison strategy:
+	// Phase 1: Compare text from SHOW CREATE TABLE first
+	// Phase 2: Only if text differs, use INFORMATION_SCHEMA for detailed comparison
+	useStructuredComparison := len(sourceMyS.FieldInfos) > 0 && len(destMyS.FieldInfos) > 0
+
+	if useStructuredComparison {
+		log.Printf("[Debug] Using two-phase field comparison for table %s", table)
+		// Use two-phase comparison
+		for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
+			fieldName := el.Key.(string)
+			if sc.Config.IsIgnoreField(table, fieldName) {
+				log.Printf("ignore column %s.%s", table, fieldName)
+				continue
+			}
+			var alterSQL string
+
+			if destValue, has := destMyS.Fields.Get(fieldName); has {
+				// Field exists in destination
+				// Phase 1: Compare text from SHOW CREATE TABLE directly
+				if el.Value == destValue {
+					// Text definitions are identical, skip this field
+					log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "not change (text identical)")
+					beforeFieldName = fieldName
+					fieldCount++
+					continue
+				}
+
+				// Phase 2: Text differs, use structured comparison to determine if change is needed
+				sourceFieldInfo := sourceMyS.FieldInfos[fieldName]
+				destFieldInfo := destMyS.FieldInfos[fieldName]
+
+				if sourceFieldInfo != nil && destFieldInfo != nil {
+					if sourceFieldInfo.Equals(destFieldInfo) {
+						// Structured info shows they're semantically equal despite text difference
+						log.Printf("[Debug] field %s.%s: text differs but semantically equal, skipping", table, fieldName)
+						log.Printf("[Debug] source text: %s", el.Value)
+						log.Printf("[Debug] dest text: %s", destValue)
+						beforeFieldName = fieldName
+						fieldCount++
+						continue
+					}
+					// Fields are genuinely different
+					alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, sourceFieldInfo.String())
+					log.Printf("[Debug] field %s.%s: confirmed difference via structured comparison", table, fieldName)
+					log.Printf("[Debug] source: %+v", sourceFieldInfo)
+					log.Printf("[Debug] dest: %+v", destFieldInfo)
+				} else {
+					// No structured info, use text-based CHANGE
+					alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, el.Value)
+					log.Printf("[Debug] field %s.%s: text differs, using text-based change", table, fieldName)
+				}
+				beforeFieldName = fieldName
+			} else {
+				// Field doesn't exist in destination, ADD it
+				if len(beforeFieldName) == 0 {
+					if fieldCount == 0 {
+						alterSQL = "ADD " + el.Value.(string) + " FIRST"
+					} else {
+						alterSQL = "ADD " + el.Value.(string)
+					}
+				} else {
+					alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", el.Value.(string), beforeFieldName)
+				}
+				beforeFieldName = fieldName
+			}
+
+			if len(alterSQL) != 0 {
+				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "alterSQL=", alterSQL)
+				alterLines = append(alterLines, alterSQL)
+			} else {
+				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "not change")
+			}
+			fieldCount++
 		}
-		fieldCount++
+	} else {
+		log.Printf("[Debug] Using legacy text-based field comparison for table %s", table)
+		// Use legacy text-based comparison
+		for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
+			if sc.Config.IsIgnoreField(table, el.Key.(string)) {
+				log.Printf("ignore column %s.%s", table, el.Key.(string))
+				continue
+			}
+			var alterSQL string
+			if destDt, has := destMyS.Fields.Get(el.Key); has {
+				if el.Value != destDt {
+					alterSQL = fmt.Sprintf("CHANGE `%s` %s", el.Key, el.Value)
+				}
+				beforeFieldName = el.Key.(string)
+			} else {
+				if len(beforeFieldName) == 0 {
+					if fieldCount == 0 {
+						alterSQL = "ADD " + el.Value.(string) + " FIRST"
+					} else {
+						alterSQL = "ADD " + el.Value.(string)
+					}
+				} else {
+					alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", el.Value.(string), beforeFieldName)
+				}
+				beforeFieldName = el.Key.(string)
+			}
+
+			if len(alterSQL) != 0 {
+				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
+				alterLines = append(alterLines, alterSQL)
+			} else {
+				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
+			}
+			fieldCount++
+		}
 	}
 
 	// 源库已经删除的字段
