@@ -24,7 +24,7 @@ func TestFieldInfo_CharsetCollationComparison(t *testing.T) {
 		ColumnName:    "name",
 		ColumnType:    "varchar(64)",
 		IsNullAble:    "NO",
-		CharsetName:   stringPtr("utf8mb4"),      // Explicit charset
+		CharsetName:   stringPtr("utf8mb4"),            // Explicit charset
 		CollationName: stringPtr("utf8mb4_general_ci"), // Explicit collation
 	}
 
@@ -67,22 +67,22 @@ func TestFieldInfo_WithTimestamps(t *testing.T) {
 			CollationName: nil,
 		},
 		"lock_until": {
-			ColumnName:     "lock_until",
-			ColumnType:     "timestamp(3)",
-			IsNullAble:     "NO",
-			ColumnDefault:  stringPtr("CURRENT_TIMESTAMP(3)"),
-			Extra:          "DEFAULT_GENERATED on update CURRENT_TIMESTAMP(3)",
-			CharsetName:    nil,
-			CollationName:  nil,
+			ColumnName:    "lock_until",
+			ColumnType:    "timestamp(3)",
+			IsNullAble:    "NO",
+			ColumnDefault: stringPtr("CURRENT_TIMESTAMP(3)"),
+			Extra:         "DEFAULT_GENERATED on update CURRENT_TIMESTAMP(3)",
+			CharsetName:   nil,
+			CollationName: nil,
 		},
 		"locked_at": {
-			ColumnName:     "locked_at",
-			ColumnType:     "timestamp(3)",
-			IsNullAble:     "NO",
-			ColumnDefault:  stringPtr("CURRENT_TIMESTAMP(3)"),
-			Extra:          "DEFAULT_GENERATED",
-			CharsetName:    nil,
-			CollationName:  nil,
+			ColumnName:    "locked_at",
+			ColumnType:    "timestamp(3)",
+			IsNullAble:    "NO",
+			ColumnDefault: stringPtr("CURRENT_TIMESTAMP(3)"),
+			Extra:         "DEFAULT_GENERATED",
+			CharsetName:   nil,
+			CollationName: nil,
 		},
 		"locked_by": {
 			ColumnName:    "locked_by",
@@ -102,22 +102,22 @@ func TestFieldInfo_WithTimestamps(t *testing.T) {
 			CollationName: stringPtr("utf8mb4_general_ci"),
 		},
 		"lock_until": {
-			ColumnName:     "lock_until",
-			ColumnType:     "timestamp(3)",
-			IsNullAble:     "NO",
-			ColumnDefault:  stringPtr("CURRENT_TIMESTAMP(3)"),
-			Extra:          "DEFAULT_GENERATED on update CURRENT_TIMESTAMP(3)",
-			CharsetName:    nil,
-			CollationName:  nil,
+			ColumnName:    "lock_until",
+			ColumnType:    "timestamp(3)",
+			IsNullAble:    "NO",
+			ColumnDefault: stringPtr("CURRENT_TIMESTAMP(3)"),
+			Extra:         "DEFAULT_GENERATED on update CURRENT_TIMESTAMP(3)",
+			CharsetName:   nil,
+			CollationName: nil,
 		},
 		"locked_at": {
-			ColumnName:     "locked_at",
-			ColumnType:     "timestamp(3)",
-			IsNullAble:     "NO",
-			ColumnDefault:  stringPtr("CURRENT_TIMESTAMP(3)"),
-			Extra:          "DEFAULT_GENERATED",
-			CharsetName:    nil,
-			CollationName:  nil,
+			ColumnName:    "locked_at",
+			ColumnType:    "timestamp(3)",
+			IsNullAble:    "NO",
+			ColumnDefault: stringPtr("CURRENT_TIMESTAMP(3)"),
+			Extra:         "DEFAULT_GENERATED",
+			CharsetName:   nil,
+			CollationName: nil,
 		},
 		"locked_by": {
 			ColumnName:    "locked_by",
@@ -141,10 +141,10 @@ func TestFieldInfo_WithTimestamps(t *testing.T) {
 func TestFieldInfo_DefaultCharsets(t *testing.T) {
 	// Test that default charsets are handled correctly
 	testCases := []struct {
-		name         string
-		charsetName  *string
+		name          string
+		charsetName   *string
 		collationName *string
-		shouldEqual  bool
+		shouldEqual   bool
 	}{
 		{
 			name:          "both nil",

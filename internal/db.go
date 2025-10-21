@@ -2,6 +2,7 @@ package internal
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -11,18 +12,18 @@ import (
 
 // FieldInfo represents detailed field information from INFORMATION_SCHEMA.COLUMNS
 type FieldInfo struct {
-	ColumnName         string  `json:"column_name"`
-	OrdinalPosition    int     `json:"ordinal_position"`
-	ColumnDefault      *string `json:"column_default"`
-	IsNullAble         string  `json:"is_nullable"`
-	DataType           string  `json:"data_type"`
-	CharacterMaximumLength *int `json:"character_maximum_length"`
-	NumericPrecision   *int    `json:"numeric_precision"`
-	NumericScale       *int    `json:"numeric_scale"`
-	CharsetName        *string `json:"character_set_name"`
-	CollationName      *string `json:"collation_name"`
-	ColumnType         string  `json:"column_type"`
-	Extra              string  `json:"extra"`
+	ColumnName             string  `json:"column_name"`
+	OrdinalPosition        int     `json:"ordinal_position"`
+	ColumnDefault          *string `json:"column_default"`
+	IsNullAble             string  `json:"is_nullable"`
+	DataType               string  `json:"data_type"`
+	CharacterMaximumLength *int    `json:"character_maximum_length"`
+	NumericPrecision       *int    `json:"numeric_precision"`
+	NumericScale           *int    `json:"numeric_scale"`
+	CharsetName            *string `json:"character_set_name"`
+	CollationName          *string `json:"collation_name"`
+	ColumnType             string  `json:"column_type"`
+	Extra                  string  `json:"extra"`
 }
 
 // String returns the full column definition as used in CREATE TABLE
@@ -126,14 +127,14 @@ func (f *FieldInfo) collationEquals(other *FieldInfo) bool {
 		// If one is NULL, check if the other is the default collation
 		if f.CollationName != nil {
 			return *f.CollationName == "utf8mb4_general_ci" ||
-				   *f.CollationName == "utf8mb4_unicode_ci" ||
-				   *f.CollationName == "utf8_general_ci" ||
-				   *f.CollationName == "latin1_swedish_ci"
+				*f.CollationName == "utf8mb4_unicode_ci" ||
+				*f.CollationName == "utf8_general_ci" ||
+				*f.CollationName == "latin1_swedish_ci"
 		}
 		return *other.CollationName == "utf8mb4_general_ci" ||
-			   *other.CollationName == "utf8mb4_unicode_ci" ||
-			   *other.CollationName == "utf8_general_ci" ||
-			   *other.CollationName == "latin1_swedish_ci"
+			*other.CollationName == "utf8mb4_unicode_ci" ||
+			*other.CollationName == "utf8_general_ci" ||
+			*other.CollationName == "latin1_swedish_ci"
 	}
 
 	// Both not NULL, compare values
@@ -217,13 +218,13 @@ func (db *MyDb) GetTableSchema(name string) (schema string) {
 func (db *MyDb) GetTableFieldsFromInformationSchema(tableName string) (map[string]*FieldInfo, error) {
 	// Check if database connection is available
 	if db == nil || db.Db == nil {
-		return nil, fmt.Errorf("database connection is nil")
+		return nil, errors.New("database connection is nil")
 	}
 
 	// Extract database name from DSN or use current database
 	dbName := db.getDatabaseName()
 	if dbName == "" {
-		return nil, fmt.Errorf("could not determine database name from DSN")
+		return nil, errors.New("could not determine database name from DSN")
 	}
 
 	query := `
@@ -317,7 +318,7 @@ func (db *MyDb) GetTableFieldsFromInformationSchema(tableName string) (map[strin
 // getDatabaseName extracts database name from the current database connection
 func (db *MyDb) getDatabaseName() string {
 	if db == nil || db.Db == nil {
-		log.Printf("database connection is nil")
+		log.Print("database connection is nil")
 		return ""
 	}
 	var dbName string

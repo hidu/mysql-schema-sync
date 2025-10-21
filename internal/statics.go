@@ -167,7 +167,7 @@ func (s *statics) sendMailNotice(cfg *Config) {
 		log.Println("no table change, skip send mail")
 		return
 	}
-	title := "[mysql_schema_sync] " + strconv.Itoa(alterTotal) + " tables change [" + dsnSort(cfg.DestDSN) + "]"
+	title := "[mysql_schema_sync] " + strconv.Itoa(alterTotal) + " tables change [" + dsnShort(cfg.DestDSN) + "]"
 	body := `
 <style>
 .tb_1,.tb_1 td,.tb_1 th{border: 1px solid;border-collapse: collapse;}
@@ -181,8 +181,8 @@ func (s *statics) sendMailNotice(cfg *Config) {
 
 	hostName, _ := os.Hostname()
 	body += "<h2>任务信息</h2>\n<pre>"
-	body += " 数据源：" + dsnSort(cfg.SourceDSN) + "\n"
-	body += "   目标：" + dsnSort(cfg.DestDSN) + "\n"
+	body += " 数据源：" + dsnShort(cfg.SourceDSN) + "\n"
+	body += "   目标：" + dsnShort(cfg.DestDSN) + "\n"
 	body += " 有变化：" + strconv.Itoa(len(s.tables)) + " 张表/条语句\n"
 	body += "<font color=green>是否同步：" + fmt.Sprintf("%t", s.Config.Sync) + "</font>\n"
 	if s.Config.Sync {

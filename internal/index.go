@@ -118,7 +118,7 @@ func parseDbIndexLine(line string) *DbIndex {
 		return idx
 	}
 
-	//CONSTRAINT `chk_xx_1` CHECK ((`x` >= 0 and `y` <= 100))
+	// CONSTRAINT `chk_xx_1` CHECK ((`x` >= 0 and `y` <= 100))
 	checkMatches := checkConstraintReg.FindStringSubmatch(line)
 	if len(checkMatches) > 0 {
 		idx.IndexType = checkConstraint

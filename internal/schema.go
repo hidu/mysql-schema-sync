@@ -10,11 +10,11 @@ import (
 
 // MySchema table schema
 type MySchema struct {
-	Fields         *orderedmap.OrderedMap           // Legacy: field name -> field definition string
-	FieldInfos     map[string]*FieldInfo            // New: structured field information
-	IndexAll       map[string]*DbIndex
-	ForeignAll     map[string]*DbIndex
-	SchemaRaw      string
+	Fields     *orderedmap.OrderedMap // Legacy: field name -> field definition string
+	FieldInfos map[string]*FieldInfo  // New: structured field information
+	IndexAll   map[string]*DbIndex
+	ForeignAll map[string]*DbIndex
+	SchemaRaw  string
 }
 
 func (mys *MySchema) String() string {

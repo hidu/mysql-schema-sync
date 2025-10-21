@@ -11,7 +11,7 @@ import (
 )
 
 // Version 版本号，格式：更新日期(8位).更新次数(累加)
-const Version = "20220925.3"
+const Version = "20251021.4"
 
 // AppURL site
 const AppURL = "https://github.com/hidu/mysql-schema-sync/"
@@ -67,7 +67,7 @@ func htmlPre(str string) string {
 	return "<pre>" + html.EscapeString(str) + "</pre>"
 }
 
-func dsnSort(dsn string) string {
+func dsnShort(dsn string) string {
 	i := strings.Index(dsn, "@")
 	if i < 1 {
 		return dsn

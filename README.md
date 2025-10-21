@@ -116,6 +116,9 @@ mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
 
 ```shell
 mysql-schema-sync -help  
+```
+
+```text
   -conf string
         配置文件名称
   -dest string
