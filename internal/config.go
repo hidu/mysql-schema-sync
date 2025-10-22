@@ -35,6 +35,9 @@ type Config struct {
 	// Drop 若目标数据库表比源头多了字段、索引，是否删除
 	Drop bool
 
+	// FieldOrder 是否同步字段顺序（需要重建表，可能影响性能）
+	FieldOrder bool
+
 	// HTTPAddress 生成站点报告的地址，如 :8080
 	HTTPAddress string
 

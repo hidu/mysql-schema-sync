@@ -5,17 +5,18 @@ MySQL Schema 自动同步工具
 用于将 `线上` 数据库 Schema **变化**同步到 `本地测试环境`!
 只同步 Schema、不同步数据。
 
-支持功能：  
+支持功能：
 
-1. 同步**新表**  
-2. 同步**字段** 变动：新增、修改  
+1. 同步**新表**
+2. 同步**字段** 变动：新增、修改
 3. 同步**索引** 变动：新增、修改
-4. 支持**预览**（只对比不同步变动）  
-5. **邮件**通知变动结果
-6. 支持屏蔽更新**表、字段、索引、外键**  
-7. 支持本地比线上额外多一些表、字段、索引、外键
-8. 在该项目的基础上修复了比对过程中遇到分区表会终止后续操作的问题，支持分区表，对于分区表，会同步除了分区以外的变更。
-9. 支持每条 ddl 只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
+4. 同步**字段顺序**：支持调整字段在表中的顺序
+5. 支持**预览**（只对比不同步变动）
+6. **邮件**通知变动结果
+7. 支持屏蔽更新**表、字段、索引、外键**
+8. 支持本地比线上额外多一些表、字段、索引、外键
+9. 在该项目的基础上修复了比对过程中遇到分区表会终止后续操作的问题，支持分区表，对于分区表，会同步除了分区以外的变更。
+10. 支持每条 ddl 只会执行单个的修改，目的兼容tidb ddl问题 Unsupported multi schema change，通过single_schema_change字段控制，默认关闭。
 
 ## 安装
 
@@ -29,6 +30,8 @@ go install github.com/hidu/mysql-schema-sync@master
 修改邮件接收人  当运行失败或者有表结构变化的时候你可以收到邮件通知。  
 
 默认情况不会对多出的**表、字段、索引、外键**删除。若需要删除**字段、索引、外键** 可以使用 `-drop` 参数。
+
+默认情况不会同步字段顺序差异。若需要同步字段顺序，可以使用 `-field-order` 参数（注意：此操作可能需要重建表，影响性能）。
 
 配置示例(config.json):  
 
@@ -109,13 +112,13 @@ log存储在当前的log目录中。
 ### 参数说明
 
 ```shell
-mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop]
+mysql-schema-sync [-conf] [-dest] [-source] [-sync] [-drop] [-field-order]
 ```
 
 说明：
 
 ```shell
-mysql-schema-sync -help  
+mysql-schema-sync -help
 ```
 
 ```text
@@ -126,6 +129,8 @@ mysql-schema-sync -help
         该项不为空时，忽略读入 -conf参数项
   -drop
         是否对本地多出的字段和索引进行删除 默认否
+  -field-order
+        是否同步字段顺序（可能需要重建表，影响性能）默认否
   -http
         启用web站点显示运行结果报告的地址，如 :8080,默认否
   -source string

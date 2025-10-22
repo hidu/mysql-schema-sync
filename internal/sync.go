@@ -71,11 +71,17 @@ func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema
 	alter.Type = alterTypeNo
 
 	// Try to get structured field information from INFORMATION_SCHEMA.COLUMNS
-	sourceFields, sourceFieldsErr := sc.SourceDb.TableFieldsFromInformationSchema(table)
-	destFields, destFieldsErr := sc.DestDb.TableFieldsFromInformationSchema(table)
+	// Only if we have database connections (not in unit tests)
+	var sourceFields, destFields map[string]*FieldInfo
+	var sourceFieldsErr, destFieldsErr error
+
+	if sc.SourceDb != nil && sc.DestDb != nil {
+		sourceFields, sourceFieldsErr = sc.SourceDb.TableFieldsFromInformationSchema(table)
+		destFields, destFieldsErr = sc.DestDb.TableFieldsFromInformationSchema(table)
+	}
 
 	// If we can get structured field information from both databases, use it for precise comparison
-	if sourceFieldsErr == nil && destFieldsErr == nil {
+	if sourceFieldsErr == nil && destFieldsErr == nil && sourceFields != nil && destFields != nil {
 		log.Printf("[Debug] Using structured field comparison for table %q", table)
 		alter.SchemaDiff = NewSchemaDiffWithFieldInfos(table, RemoveTableSchemaConfig(sSchema), RemoveTableSchemaConfig(dSchema), sourceFields, destFields)
 	} else {
@@ -131,6 +137,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	var beforeFieldName string
 	var alterLines []string
 	var fieldCount int = 0
+	var sourceFieldPosition int = 0 // Track position in source table
 
 	// 比对字段 - Two-phase comparison strategy:
 	// Phase 1: Compare text from SHOW CREATE TABLE first
@@ -142,6 +149,8 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 		// Use two-phase comparison
 		for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
 			fieldName := el.Key.(string)
+			sourceFieldPosition++ // Increment position for each field in source
+
 			if sc.Config.IsIgnoreField(table, fieldName) {
 				log.Printf("ignore column %s.%s", table, fieldName)
 				continue
@@ -150,39 +159,72 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 
 			if destValue, has := destMyS.Fields.Get(fieldName); has {
 				// Field exists in destination
-				// Phase 1: Compare text from SHOW CREATE TABLE directly
-				if el.Value == destValue {
-					// Text definitions are identical, skip this field
-					log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "not change (text identical)")
-					beforeFieldName = fieldName
-					fieldCount++
-					continue
-				}
-
-				// Phase 2: Text differs, use structured comparison to determine if change is needed
 				sourceFieldInfo := sourceMyS.FieldInfos[fieldName]
 				destFieldInfo := destMyS.FieldInfos[fieldName]
 
-				if sourceFieldInfo != nil && destFieldInfo != nil {
-					if sourceFieldInfo.Equals(destFieldInfo) {
-						// Structured info shows they're semantically equal despite text difference
-						log.Printf("[Debug] field %s.%s: text differs but semantically equal, skipping", table, fieldName)
-						log.Printf("[Debug] source text: %s", el.Value)
-						log.Printf("[Debug] dest text: %s", destValue)
+				// Phase 1: Compare text from SHOW CREATE TABLE directly
+				if el.Value == destValue {
+					// Text definitions are identical
+					// Check field order if FieldOrder flag is enabled
+					if sc.Config.FieldOrder && sourceFieldInfo != nil && destFieldInfo != nil {
+						if sourceFieldInfo.OrdinalPosition != destFieldInfo.OrdinalPosition {
+							// Field order differs, generate MODIFY statement
+							alterSQL = fmt.Sprintf("MODIFY COLUMN %s", sourceFieldInfo.String())
+							if len(beforeFieldName) > 0 {
+								alterSQL += fmt.Sprintf(" AFTER `%s`", beforeFieldName)
+							} else {
+								alterSQL += " FIRST"
+							}
+							log.Printf("[Debug] field %s.%s: order differs (source pos=%d, dest pos=%d), generating MODIFY",
+								table, fieldName, sourceFieldInfo.OrdinalPosition, destFieldInfo.OrdinalPosition)
+						} else {
+							log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "not change (text identical)")
+						}
+					} else {
+						log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "not change (text identical)")
+					}
+					// Only update position tracking if no alterSQL generated (field is truly unchanged)
+					if len(alterSQL) == 0 {
 						beforeFieldName = fieldName
 						fieldCount++
 						continue
 					}
-					// Fields are genuinely different
-					alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, sourceFieldInfo.String())
-					log.Printf("[Debug] field %s.%s: confirmed difference via structured comparison", table, fieldName)
-					log.Printf("[Debug] source: %+v", sourceFieldInfo)
-					log.Printf("[Debug] dest: %+v", destFieldInfo)
 				} else {
-					// No structured info, use text-based CHANGE
-					alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, el.Value)
-					log.Printf("[Debug] field %s.%s: text differs, using text-based change", table, fieldName)
+					// Phase 2: Text differs, use structured comparison to determine if change is needed
+					if sourceFieldInfo != nil && destFieldInfo != nil {
+						if sourceFieldInfo.Equals(destFieldInfo) {
+							// Structured info shows they're semantically equal despite text difference
+							// Still check field order if FieldOrder flag is enabled
+							if sc.Config.FieldOrder && sourceFieldInfo.OrdinalPosition != destFieldInfo.OrdinalPosition {
+								alterSQL = fmt.Sprintf("MODIFY COLUMN %s", sourceFieldInfo.String())
+								if len(beforeFieldName) > 0 {
+									alterSQL += fmt.Sprintf(" AFTER `%s`", beforeFieldName)
+								} else {
+									alterSQL += " FIRST"
+								}
+								log.Printf("[Debug] field %s.%s: semantically equal but order differs, generating MODIFY", table, fieldName)
+							} else {
+								log.Printf("[Debug] field %s.%s: text differs but semantically equal, skipping", table, fieldName)
+								log.Printf("[Debug] source text: %s", el.Value)
+								log.Printf("[Debug] dest text: %s", destValue)
+								beforeFieldName = fieldName
+								fieldCount++
+								continue
+							}
+						} else {
+							// Fields are genuinely different
+							alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, sourceFieldInfo.String())
+							log.Printf("[Debug] field %s.%s: confirmed difference via structured comparison", table, fieldName)
+							log.Printf("[Debug] source: %+v", sourceFieldInfo)
+							log.Printf("[Debug] dest: %+v", destFieldInfo)
+						}
+					} else {
+						// No structured info, use text-based CHANGE
+						alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, el.Value)
+						log.Printf("[Debug] field %s.%s: text differs, using text-based change", table, fieldName)
+					}
 				}
+				// Always update position tracking to reflect source table order
 				beforeFieldName = fieldName
 			} else {
 				// Field doesn't exist in destination, ADD it
