@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/elliotchance/orderedmap"
+	"github.com/xanygo/anygo/ds/xmap"
 	"github.com/xanygo/anygo/xt"
 )
 
@@ -35,8 +35,8 @@ func TestParseSchema(t *testing.T) {
 				schema: testLoadFile("testdata/user_0.sql"),
 			},
 			want: &MySchema{
-				Fields: (func() *orderedmap.OrderedMap {
-					m := orderedmap.NewOrderedMap()
+				Fields: (func() xmap.Ordered[string, string] {
+					m := xmap.Ordered[string, string]{}
 					// 不会检查 value
 					m.Set("id", "`id` bigint unsigned NOT NULL AUTO_INCREMENT,")
 					m.Set("email", "`email` varchar(1000) NOT NULL DEFAULT '',")
@@ -60,8 +60,8 @@ func TestParseSchema(t *testing.T) {
 				schema: testLoadFile("testdata/user_4.sql"),
 			},
 			want: &MySchema{
-				Fields: (func() *orderedmap.OrderedMap {
-					m := orderedmap.NewOrderedMap()
+				Fields: (func() xmap.Ordered[string, string] {
+					m := xmap.Ordered[string, string]{}
 					// 不会检查 value
 					m.Set("id", "\"id\" bigint unsigned NOT NULL AUTO_INCREMENT,")
 					m.Set("email", "\"email\" varchar(1000) NOT NULL DEFAULT \"\",")

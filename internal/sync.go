@@ -147,8 +147,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	if useStructuredComparison {
 		log.Printf("[Debug] Using two-phase field comparison for table %s", table)
 		// Use two-phase comparison
-		for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
-			fieldName := el.Key.(string)
+		for fieldName, value := range sourceMyS.Fields.Iter() {
 			sourceFieldPosition++ // Increment position for each field in source
 
 			if sc.Config.IsIgnoreField(table, fieldName) {
@@ -163,7 +162,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 				destFieldInfo := destMyS.FieldInfos[fieldName]
 
 				// Phase 1: Compare text from SHOW CREATE TABLE directly
-				if el.Value == destValue {
+				if value == destValue {
 					// Text definitions are identical
 					// Check field order if FieldOrder flag is enabled
 					if sc.Config.FieldOrder && sourceFieldInfo != nil && destFieldInfo != nil {
@@ -205,7 +204,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 								log.Printf("[Debug] field %s.%s: semantically equal but order differs, generating MODIFY", table, fieldName)
 							} else {
 								log.Printf("[Debug] field %s.%s: text differs but semantically equal, skipping", table, fieldName)
-								log.Printf("[Debug] source text: %s", el.Value)
+								log.Printf("[Debug] source text: %s", value)
 								log.Printf("[Debug] dest text: %s", destValue)
 								beforeFieldName = fieldName
 								fieldCount++
@@ -220,7 +219,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 						}
 					} else {
 						// No structured info, use text-based CHANGE
-						alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, el.Value)
+						alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, value)
 						log.Printf("[Debug] field %s.%s: text differs, using text-based change", table, fieldName)
 					}
 				}
@@ -230,12 +229,12 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 				// Field doesn't exist in destination, ADD it
 				if len(beforeFieldName) == 0 {
 					if fieldCount == 0 {
-						alterSQL = "ADD " + el.Value.(string) + " FIRST"
+						alterSQL = "ADD " + value + " FIRST"
 					} else {
-						alterSQL = "ADD " + el.Value.(string)
+						alterSQL = "ADD " + value
 					}
 				} else {
-					alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", el.Value.(string), beforeFieldName)
+					alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", value, beforeFieldName)
 				}
 				beforeFieldName = fieldName
 			}
@@ -251,35 +250,35 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	} else {
 		log.Printf("[Debug] Using legacy text-based field comparison for table %s", table)
 		// Use legacy text-based comparison
-		for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
-			if sc.Config.IsIgnoreField(table, el.Key.(string)) {
-				log.Printf("ignore column %s.%s", table, el.Key.(string))
+		for fieldName, value := range sourceMyS.Fields.Iter() {
+			if sc.Config.IsIgnoreField(table, fieldName) {
+				log.Printf("ignore column %s.%s", table, fieldName)
 				continue
 			}
 			var alterSQL string
-			if destDt, has := destMyS.Fields.Get(el.Key); has {
-				if el.Value != destDt {
-					alterSQL = fmt.Sprintf("CHANGE `%s` %s", el.Key, el.Value)
+			if destDt, has := destMyS.Fields.Get(fieldName); has {
+				if value != destDt {
+					alterSQL = fmt.Sprintf("CHANGE `%s` %s", fieldName, value)
 				}
-				beforeFieldName = el.Key.(string)
+				beforeFieldName = fieldName
 			} else {
 				if len(beforeFieldName) == 0 {
 					if fieldCount == 0 {
-						alterSQL = "ADD " + el.Value.(string) + " FIRST"
+						alterSQL = "ADD " + value + " FIRST"
 					} else {
-						alterSQL = "ADD " + el.Value.(string)
+						alterSQL = "ADD " + value
 					}
 				} else {
-					alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", el.Value.(string), beforeFieldName)
+					alterSQL = fmt.Sprintf("ADD %s AFTER `%s`", value, beforeFieldName)
 				}
-				beforeFieldName = el.Key.(string)
+				beforeFieldName = fieldName
 			}
 
 			if len(alterSQL) != 0 {
-				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "alterSQL=", alterSQL)
+				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "alterSQL=", alterSQL)
 				alterLines = append(alterLines, alterSQL)
 			} else {
-				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, el.Key.(string)), "not change")
+				log.Println("[Debug] check column.alter ", fmt.Sprintf("%s.%s", table, fieldName), "not change")
 			}
 			fieldCount++
 		}
@@ -288,7 +287,7 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	// 源库已经删除的字段
 	if sc.Config.Drop {
 		for _, name := range destMyS.Fields.Keys() {
-			if sc.Config.IsIgnoreField(table, name.(string)) {
+			if sc.Config.IsIgnoreField(table, name) {
 				log.Printf("ignore column %s.%s", table, name)
 				continue
 			}

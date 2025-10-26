@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elliotchance/orderedmap"
+	"github.com/xanygo/anygo/ds/xmap"
 )
 
 // MySchema table schema
 type MySchema struct {
-	Fields     *orderedmap.OrderedMap // Legacy: field name -> field definition string
-	FieldInfos map[string]*FieldInfo  // New: structured field information
+	Fields     xmap.Ordered[string, string] // Legacy: field name -> field definition string
+	FieldInfos map[string]*FieldInfo        // New: structured field information
 	IndexAll   map[string]*DbIndex
 	ForeignAll map[string]*DbIndex
 	SchemaRaw  string
 }
 
 func (mys *MySchema) String() string {
-	if mys.Fields == nil {
+	if mys.Fields.Len() == 0 {
 		return "nil"
 	}
 	var buf bytes.Buffer
@@ -48,11 +48,7 @@ func (mys *MySchema) String() string {
 
 // GetFieldNames table names
 func (mys *MySchema) GetFieldNames() []string {
-	var names []string
-	for _, name := range mys.Fields.Keys() {
-		names = append(names, name.(string))
-	}
-	return names
+	return mys.Fields.Keys()
 }
 
 func (mys *MySchema) RelationTables() []string {
@@ -75,7 +71,6 @@ func ParseSchema(schema string) *MySchema {
 	lines := strings.Split(schema, "\n")
 	mys := &MySchema{
 		SchemaRaw:  schema,
-		Fields:     orderedmap.NewOrderedMap(),
 		FieldInfos: make(map[string]*FieldInfo),
 		IndexAll:   make(map[string]*DbIndex),
 		ForeignAll: make(map[string]*DbIndex),
