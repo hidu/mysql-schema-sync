@@ -7,7 +7,7 @@ package internal
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/xanygo/anygo/xt"
 )
 
 func TestSchemaSync_getAlterDataBySchema(t *testing.T) {
@@ -99,7 +99,7 @@ func TestSchemaSync_getAlterDataBySchema(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.sc.getAlterDataBySchema(tt.args.table, tt.args.sSchema, tt.args.dSchema, tt.args.cfg)
 			t.Log("got alter:\n", got.String())
-			require.Equal(t, tt.want, got.String())
+			xt.Equal(t, tt.want, got.String())
 		})
 	}
 }

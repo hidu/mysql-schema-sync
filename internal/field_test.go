@@ -7,7 +7,7 @@ package internal
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/xanygo/anygo/xt"
 )
 
 func TestFieldInfo_Equals(t *testing.T) {
@@ -130,7 +130,7 @@ func TestFieldInfo_Equals(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.field1.Equals(tt.field2)
-			require.Equal(t, tt.equal, got, "Fields should be equal: %v", tt.equal)
+			xt.Equal(t, tt.equal, got)
 		})
 	}
 }
@@ -193,7 +193,7 @@ func TestFieldInfo_String(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.field.String()
-			require.Equal(t, tt.want, got)
+			xt.Equal(t, tt.want, got)
 		})
 	}
 }

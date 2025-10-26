@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/xanygo/anygo/cli/xcolor"
 )
 
 // SchemaSync 配置文件
@@ -402,7 +402,8 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 // SyncSQL4Dest sync schema change
 func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 	sqlStr = strings.TrimSpace(sqlStr)
-	log.Print("Exec_SQL:\n>>>>>>\n", color.GreenString(sqlStr), "\n<<<<<<<<\n\n")
+	xcolor.Green(sqlStr)
+	log.Print("Exec_SQL:\n>>>>>>\n", xcolor.GreenString(sqlStr), "\n<<<<<<<<\n\n")
 	if len(sqlStr) == 0 {
 		log.Println("sql_is_empty, skip")
 		return nil

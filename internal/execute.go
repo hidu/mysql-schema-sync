@@ -9,7 +9,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/xanygo/anygo/cli/xcolor"
 )
 
 func Execute(cfg *Config) {
@@ -26,14 +26,14 @@ func Execute(cfg *Config) {
 	changedTables := make(map[string][]*TableAlterData)
 
 	for _, table := range allTables {
-		color.Green("start checking table %q ...", table)
+		xcolor.Green("start checking table %q ...", table)
 		if !cfg.CheckMatchTables(table) {
-			color.Cyan("table %q skipped by not match", table)
+			xcolor.Cyan("table %q skipped by not match", table)
 			continue
 		}
 
 		if cfg.CheckMatchIgnoreTables(table) {
-			color.Cyan("table %q skipped by ignore", table)
+			xcolor.Cyan("table %q skipped by ignore", table)
 			continue
 		}
 
@@ -41,10 +41,10 @@ func Execute(cfg *Config) {
 
 		switch sd.Type {
 		case alterTypeNo:
-			color.Yellow("table %q not changed", table)
+			xcolor.Yellow("table %q not changed", table)
 			continue
 		case alterTypeDropTable:
-			color.Yellow("table %q skipped, only exists in destination's database", table)
+			xcolor.Yellow("table %q skipped, only exists in destination's database", table)
 			continue
 		default:
 		}

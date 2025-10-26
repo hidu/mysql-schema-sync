@@ -5,9 +5,10 @@
 package internal
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/xanygo/anygo/xt"
 )
 
 func TestFieldInfo_CharsetCollationComparison(t *testing.T) {
@@ -29,8 +30,8 @@ func TestFieldInfo_CharsetCollationComparison(t *testing.T) {
 	}
 
 	// These should be considered equal
-	require.True(t, sourceField.Equals(destField), "Fields with implicit and explicit charset/collation should be equal")
-	require.True(t, destField.Equals(sourceField), "Fields with explicit and implicit charset/collation should be equal")
+	xt.True(t, sourceField.Equals(destField))
+	xt.True(t, destField.Equals(sourceField))
 }
 
 func TestFieldInfo_DifferentCharsetCollation(t *testing.T) {
@@ -52,8 +53,8 @@ func TestFieldInfo_DifferentCharsetCollation(t *testing.T) {
 	}
 
 	// These should be considered different
-	require.False(t, sourceField.Equals(destField), "Fields with different charset should be different")
-	require.False(t, destField.Equals(sourceField), "Fields with different charset should be different")
+	xt.False(t, sourceField.Equals(destField))
+	xt.False(t, destField.Equals(sourceField))
 }
 
 func TestFieldInfo_WithTimestamps(t *testing.T) {
@@ -130,11 +131,11 @@ func TestFieldInfo_WithTimestamps(t *testing.T) {
 
 	// All fields should be considered equal
 	for fieldName, sourceField := range sourceFields {
-		destField := destFields[fieldName]
-		require.True(t, sourceField.Equals(destField),
-			"Field %s should be equal between source and dest", fieldName)
-		require.True(t, destField.Equals(sourceField),
-			"Field %s should be equal between dest and source", fieldName)
+		t.Run(fmt.Sprintf("field_%s", fieldName), func(t *testing.T) {
+			destField := destFields[fieldName]
+			xt.True(t, sourceField.Equals(destField))
+			xt.True(t, destField.Equals(sourceField))
+		})
 	}
 }
 
@@ -215,11 +216,11 @@ func TestFieldInfo_DefaultCharsets(t *testing.T) {
 			}
 
 			if tc.shouldEqual {
-				require.True(t, field1.Equals(field2), "Fields should be equal: %s", tc.name)
-				require.True(t, field2.Equals(field1), "Fields should be equal (reverse): %s", tc.name)
+				xt.True(t, field1.Equals(field2))
+				xt.True(t, field2.Equals(field1))
 			} else {
-				require.False(t, field1.Equals(field2), "Fields should be different: %s", tc.name)
-				require.False(t, field2.Equals(field1), "Fields should be different (reverse): %s", tc.name)
+				xt.False(t, field1.Equals(field2))
+				xt.False(t, field2.Equals(field1))
 			}
 		})
 	}

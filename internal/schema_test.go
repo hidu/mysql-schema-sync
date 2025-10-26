@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/elliotchance/orderedmap"
-	"github.com/stretchr/testify/require"
+	"github.com/xanygo/anygo/xt"
 )
 
 func testLoadFile(name string) string {
@@ -85,7 +85,7 @@ func TestParseSchema(t *testing.T) {
 			got := ParseSchema(tt.args.schema)
 			gs := got.String()
 			ws := tt.want.String()
-			require.Equal(t, ws, gs)
+			xt.Equal(t, ws, gs)
 		})
 	}
 }

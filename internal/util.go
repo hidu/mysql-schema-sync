@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/xanygo/anygo/cli/xcolor"
 )
 
 // Version 版本号，格式：更新日期(8位).更新次数(累加)
@@ -79,7 +79,7 @@ func dsnShort(dsn string) string {
 
 func errString(err error) string {
 	if err == nil {
-		return color.YellowString("<nil>")
+		return xcolor.YellowString("<nil>")
 	}
-	return color.RedString("%s", err.Error())
+	return xcolor.RedString("%s", err.Error())
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql" // mysql driver
+	"github.com/xanygo/anygo/cli/xcolor"
 )
 
 // FieldInfo represents detailed field information from INFORMATION_SCHEMA.COLUMNS
@@ -331,8 +331,8 @@ func (db *MyDb) Query(query string, args ...any) (rows *sql.Rows, err error) {
 	txt := fmt.Sprintf("[%-6s: %s] [Query] Start SQL=%s Args=%s\n",
 		db.dbType,
 		db.dbName,
-		color.GreenString("%s", strings.TrimSpace(query)),
-		color.GreenString("%v", args),
+		xcolor.GreenString("%s", strings.TrimSpace(query)),
+		xcolor.GreenString("%v", args),
 	)
 	log.Output(2, txt)
 	start := time.Now()
