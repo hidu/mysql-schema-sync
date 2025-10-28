@@ -68,8 +68,15 @@ func (f *FieldInfo) Equals(other *FieldInfo) bool {
 	if f.ColumnName != other.ColumnName ||
 		f.IsNullAble != other.IsNullAble ||
 		f.DataType != other.DataType ||
-		f.ColumnType != other.ColumnType ||
 		f.Extra != other.Extra {
+		return false
+	}
+
+	// Compare ColumnType with normalization for integer display width
+	// MySQL 8.0.19+ removed display width for integer types (int(11) -> int)
+	normalizedSourceType := normalizeIntegerType(f.ColumnType)
+	normalizedDestType := normalizeIntegerType(other.ColumnType)
+	if normalizedSourceType != normalizedDestType {
 		return false
 	}
 

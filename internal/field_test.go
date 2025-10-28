@@ -125,6 +125,167 @@ func TestFieldInfo_Equals(t *testing.T) {
 			},
 			equal: true,
 		},
+		// Integer type display width tests (MySQL 5.7 vs 8.0 compatibility)
+		{
+			name: "int(11) vs int should be equal",
+			field1: &FieldInfo{
+				ColumnName: "id",
+				ColumnType: "int(11)",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "id",
+				ColumnType: "int",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "bigint(20) vs bigint should be equal",
+			field1: &FieldInfo{
+				ColumnName: "user_id",
+				ColumnType: "bigint(20)",
+				DataType:   "bigint",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "user_id",
+				ColumnType: "bigint",
+				DataType:   "bigint",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "tinyint(1) vs tinyint should be equal",
+			field1: &FieldInfo{
+				ColumnName: "is_active",
+				ColumnType: "tinyint(1)",
+				DataType:   "tinyint",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "is_active",
+				ColumnType: "tinyint",
+				DataType:   "tinyint",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "tinyint(4) vs tinyint should be equal",
+			field1: &FieldInfo{
+				ColumnName: "status",
+				ColumnType: "tinyint(4)",
+				DataType:   "tinyint",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "status",
+				ColumnType: "tinyint",
+				DataType:   "tinyint",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "int(11) unsigned vs int unsigned should be equal",
+			field1: &FieldInfo{
+				ColumnName: "count",
+				ColumnType: "int(11) unsigned",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "count",
+				ColumnType: "int unsigned",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "bigint(20) unsigned vs bigint unsigned should be equal",
+			field1: &FieldInfo{
+				ColumnName: "total",
+				ColumnType: "bigint(20) unsigned",
+				DataType:   "bigint",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "total",
+				ColumnType: "bigint unsigned",
+				DataType:   "bigint",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "int(10) zerofill vs int zerofill should be equal",
+			field1: &FieldInfo{
+				ColumnName: "order_id",
+				ColumnType: "int(10) zerofill",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "order_id",
+				ColumnType: "int zerofill",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "int(10) unsigned zerofill vs int unsigned zerofill should be equal",
+			field1: &FieldInfo{
+				ColumnName: "code",
+				ColumnType: "int(10) unsigned zerofill",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "code",
+				ColumnType: "int unsigned zerofill",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			equal: true,
+		},
+		{
+			name: "int vs bigint should not be equal",
+			field1: &FieldInfo{
+				ColumnName: "value",
+				ColumnType: "int",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "value",
+				ColumnType: "bigint",
+				DataType:   "bigint",
+				IsNullAble: "NO",
+			},
+			equal: false,
+		},
+		{
+			name: "int unsigned vs int should not be equal (unsigned modifier difference)",
+			field1: &FieldInfo{
+				ColumnName: "amount",
+				ColumnType: "int unsigned",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			field2: &FieldInfo{
+				ColumnName: "amount",
+				ColumnType: "int",
+				DataType:   "int",
+				IsNullAble: "NO",
+			},
+			equal: false,
+		},
 	}
 
 	for _, tt := range tests {
