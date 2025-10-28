@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -24,7 +25,22 @@ type FieldInfo struct {
 	CharsetName            *string `json:"character_set_name"`
 	CollationName          *string `json:"collation_name"`
 	ColumnType             string  `json:"column_type"`
+	ColumnComment          string  `json:"column_comment"`
 	Extra                  string  `json:"extra"`
+}
+
+// needsQuotedDefault returns true if the field type requires quoted default values
+func (f *FieldInfo) needsQuotedDefault() bool {
+	// String types that need quoted default values
+	stringTypes := []string{
+		"char", "varchar", "binary", "varbinary",
+		"tinyblob", "blob", "mediumblob", "longblob",
+		"tinytext", "text", "mediumtext", "longtext",
+		"enum", "set", "json",
+	}
+
+	dataType := strings.ToLower(f.DataType)
+	return slices.Contains(stringTypes, dataType)
 }
 
 // String returns the full column definition as used in CREATE TABLE
@@ -43,16 +59,31 @@ func (f *FieldInfo) String() string {
 
 	// Default value
 	if f.ColumnDefault != nil {
-		if strings.ToUpper(*f.ColumnDefault) == "CURRENT_TIMESTAMP" {
-			parts = append(parts, "DEFAULT CURRENT_TIMESTAMP")
+		defaultValue := *f.ColumnDefault
+		upperDefault := strings.ToUpper(defaultValue)
+
+		// Special keywords that don't need quotes
+		if upperDefault == "CURRENT_TIMESTAMP" || upperDefault == "NULL" {
+			parts = append(parts, fmt.Sprintf("DEFAULT %s", upperDefault))
+		} else if f.needsQuotedDefault() {
+			// String types need quotes
+			parts = append(parts, fmt.Sprintf("DEFAULT '%s'", defaultValue))
 		} else {
-			parts = append(parts, fmt.Sprintf("DEFAULT %s", *f.ColumnDefault))
+			// Numeric types don't need quotes
+			parts = append(parts, fmt.Sprintf("DEFAULT %s", defaultValue))
 		}
 	}
 
 	// Extra
 	if f.Extra != "" {
 		parts = append(parts, strings.ToUpper(f.Extra))
+	}
+
+	// Comment
+	if f.ColumnComment != "" {
+		// Escape single quotes in comment by doubling them
+		escapedComment := strings.ReplaceAll(f.ColumnComment, "'", "''")
+		parts = append(parts, fmt.Sprintf("COMMENT '%s'", escapedComment))
 	}
 
 	return strings.Join(parts, " ")
@@ -68,6 +99,7 @@ func (f *FieldInfo) Equals(other *FieldInfo) bool {
 	if f.ColumnName != other.ColumnName ||
 		f.IsNullAble != other.IsNullAble ||
 		f.DataType != other.DataType ||
+		f.ColumnComment != other.ColumnComment ||
 		f.Extra != other.Extra {
 		return false
 	}
@@ -260,6 +292,7 @@ func (db *MyDb) TableFieldsFromInformationSchema(tableName string) (map[string]*
 			CHARACTER_SET_NAME,
 			COLLATION_NAME,
 			COLUMN_TYPE,
+			COLUMN_COMMENT,
 			EXTRA
 		FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
@@ -290,6 +323,7 @@ func (db *MyDb) TableFieldsFromInformationSchema(tableName string) (map[string]*
 			&charset,
 			&collation,
 			&field.ColumnType,
+			&field.ColumnComment,
 			&field.Extra,
 		)
 		if err != nil {
