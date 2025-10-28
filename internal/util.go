@@ -83,3 +83,32 @@ func errString(err error) string {
 	}
 	return xcolor.RedString("%s", err.Error())
 }
+
+// normalizeIntegerType removes display width from integer types for MySQL 8.0.19+ compatibility.
+// MySQL 8.0.19+ deprecated display width for integer types (TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT).
+// This function normalizes types like "int(11)" to "int" while preserving modifiers like "unsigned" and "zerofill".
+//
+// Examples:
+//   - "int(11)" -> "int"
+//   - "int(11) unsigned" -> "int unsigned"
+//   - "bigint(20)" -> "bigint"
+//   - "tinyint(1)" -> "tinyint"
+//   - "varchar(255)" -> "varchar(255)" (unchanged, not an integer type)
+func normalizeIntegerType(columnType string) string {
+	// Pattern matches: (tinyint|smallint|mediumint|int|bigint) followed by optional (digits)
+	// Captures the type name and everything after the display width
+	re := regexp.MustCompile(`(?i)^(tinyint|smallint|mediumint|int|bigint)\(\d+\)(\s+.+)?$`)
+
+	matches := re.FindStringSubmatch(columnType)
+	if len(matches) > 0 {
+		// matches[1] is the type name (e.g., "int")
+		// matches[2] is the modifiers (e.g., " unsigned", " zerofill"), may be empty
+		if len(matches) > 2 && matches[2] != "" {
+			return matches[1] + matches[2] // e.g., "int unsigned"
+		}
+		return matches[1] // e.g., "int"
+	}
+
+	// Not an integer type with display width, return as-is
+	return columnType
+}
