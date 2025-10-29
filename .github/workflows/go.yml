@@ -5,19 +5,35 @@ name: Go
 
 on:
   push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
 
 jobs:
 
-  build:
-    runs-on: ubuntu-latest
+  test:
     strategy:
       matrix:
-        go: [ '1.25']
+        go: [ '1.25' ]
+        servers: [ "ubuntu-latest" ]
+    runs-on: ${{ matrix.servers }}
 
-    name: Go ${{ matrix.go }}
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    env:
+      MSS_Test_Source: "root:root@(127.0.0.1:3306)/mss_test_db0"
+      MSS_Test_Dest : "root:root@(127.0.0.1:3306)/mss_test_db1"
+
     steps:
     - uses: actions/checkout@v4
 
@@ -29,6 +45,17 @@ jobs:
 
     - name: Display Go version
       run: go version
+
+    - name: Wait for MySQL to be ready
+      run: |
+          until mysql -h 127.0.0.1 -uroot -proot -e 'select 1' &> /dev/null; do
+            echo "Waiting for MySQL..."
+            sleep 3
+          done
+
+    - name: show DATABASES
+      run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "SHOW DATABASES;"
 
     - name: Test
       run: go test -v ./...

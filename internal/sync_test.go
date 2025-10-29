@@ -27,21 +27,21 @@ func TestSchemaSync_getAlterDataBySchema(t *testing.T) {
 			name: "user 0-1",
 			args: args{
 				table:   "user",
-				sSchema: testLoadFile("testdata/user_0.sql"),
-				dSchema: testLoadFile("testdata/user_1.sql"),
+				sSchema: testLoadFile("testdata/user/user_0.sql"),
+				dSchema: testLoadFile("testdata/user/user_1.sql"),
 				cfg:     &Config{},
 			},
 			sc: &SchemaSync{
 				Config: &Config{},
 			},
-			want: testLoadFile("testdata/result_1.sql"),
+			want: testLoadFile("testdata/user/result_1.sql"),
 		},
 		{
 			name: "user 0-1 ssc",
 			args: args{
 				table:   "user",
-				sSchema: testLoadFile("testdata/user_0.sql"),
-				dSchema: testLoadFile("testdata/user_1.sql"),
+				sSchema: testLoadFile("testdata/user/user_0.sql"),
+				dSchema: testLoadFile("testdata/user/user_1.sql"),
 				cfg: &Config{
 					SingleSchemaChange: true,
 				},
@@ -49,14 +49,14 @@ func TestSchemaSync_getAlterDataBySchema(t *testing.T) {
 			sc: &SchemaSync{
 				Config: &Config{},
 			},
-			want: testLoadFile("testdata/result_2.sql"),
+			want: testLoadFile("testdata/user/result_2.sql"),
 		},
 		{
 			name: "user 0-1 ssc",
 			args: args{
 				table:   "user",
-				sSchema: testLoadFile("testdata/user_0.sql"),
-				dSchema: testLoadFile("testdata/user_1.sql"),
+				sSchema: testLoadFile("testdata/user/user_0.sql"),
+				dSchema: testLoadFile("testdata/user/user_1.sql"),
 				cfg: &Config{
 					SingleSchemaChange: true,
 				},
@@ -64,14 +64,14 @@ func TestSchemaSync_getAlterDataBySchema(t *testing.T) {
 			sc: &SchemaSync{
 				Config: &Config{},
 			},
-			want: testLoadFile("testdata/result_2.sql"),
+			want: testLoadFile("testdata/user/result_2.sql"),
 		},
 		{
 			name: "user 1-0 ssc",
 			args: args{
 				table:   "user",
-				sSchema: testLoadFile("testdata/user_1.sql"),
-				dSchema: testLoadFile("testdata/user_0.sql"),
+				sSchema: testLoadFile("testdata/user/user_1.sql"),
+				dSchema: testLoadFile("testdata/user/user_0.sql"),
 				cfg: &Config{
 					SingleSchemaChange: true,
 				},
@@ -79,20 +79,20 @@ func TestSchemaSync_getAlterDataBySchema(t *testing.T) {
 			sc: &SchemaSync{
 				Config: &Config{},
 			},
-			want: testLoadFile("testdata/result_3.sql"),
+			want: testLoadFile("testdata/user/result_3.sql"),
 		},
 		{
 			name: "user 2-0 ssc",
 			args: args{
 				table:   "user",
-				sSchema: testLoadFile("testdata/user_2.sql"),
-				dSchema: testLoadFile("testdata/user_0.sql"),
+				sSchema: testLoadFile("testdata/user/user_2.sql"),
+				dSchema: testLoadFile("testdata/user/user_0.sql"),
 				cfg:     &Config{},
 			},
 			sc: &SchemaSync{
 				Config: &Config{},
 			},
-			want: testLoadFile("testdata/result_4.sql"),
+			want: testLoadFile("testdata/user/result_4.sql"),
 		},
 	}
 	for _, tt := range tests {

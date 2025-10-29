@@ -32,7 +32,7 @@ func TestParseSchema(t *testing.T) {
 		{
 			name: "case 1",
 			args: args{
-				schema: testLoadFile("testdata/user_0.sql"),
+				schema: testLoadFile("testdata/user/user_0.sql"),
 			},
 			want: &MySchema{
 				Fields: (func() xmap.Ordered[string, string] {
@@ -57,7 +57,7 @@ func TestParseSchema(t *testing.T) {
 		{
 			name: "case 2",
 			args: args{
-				schema: testLoadFile("testdata/user_4.sql"),
+				schema: testLoadFile("testdata/user/user_4.sql"),
 			},
 			want: &MySchema{
 				Fields: (func() xmap.Ordered[string, string] {

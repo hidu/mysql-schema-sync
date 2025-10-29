@@ -1,0 +1,18 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - go test -v ./...
+
+  TestWithDB:
+    env:
+      MSS_Test_Source : "mss_test:mss_test_pass@(127.0.0.1:3306)/mss_test_db0"
+      MSS_Test_Dest : "mss_test:mss_test_pass@(127.0.0.1:3306)/mss_test_db1"
+    cmds:
+      - go test ./internal/ -run ^TestWithDB$ -v
