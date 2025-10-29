@@ -13,12 +13,13 @@ jobs:
     strategy:
       matrix:
         go: [ '1.25' ]
+        mysql_version: [ '5.7', '8.0' ]
         servers: [ "ubuntu-latest" ]
     runs-on: ${{ matrix.servers }}
 
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:${{ matrix.mysql_version }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: testdb
@@ -67,5 +68,6 @@ jobs:
       run: go vet ./...
 
     - name: gorgeous style check
+      if: matrix.mysql_version == '5.7'
       run: go install github.com/fsgo/go_fmt/cmd/gorgeous@latest && gorgeous -d ./...
 
